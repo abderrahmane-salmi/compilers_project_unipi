@@ -4,7 +4,7 @@
 
 %token <string> VAR
 %token <int> NUM
-%token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND ASSIGN SEMICOLON LPAREN RPAREN LESS PLUS MINUS TIMES EOF
+%token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND ASSIGN SEMICOLON LPAREN RPAREN LCURLY RCURLY LESS PLUS MINUS TIMES EOF
 
 (* Precedence and Associativity Declarations *)
 %left PLUS MINUS  (* Left-associative for addition and subtraction *)
@@ -26,7 +26,7 @@ com:
 | VAR ASSIGN aexp { Assign($1, $3) }
 | com SEMICOLON com { Seq($1, $3) }
 | IF bexp THEN com ELSE com { If($2, $4, $6) }
-| WHILE bexp DO com { While($2, $4) }
+| WHILE bexp DO LCURLY com RCURLY { While($2, $5) }
 
 // HOW TO recogize bool values?
 bexp:

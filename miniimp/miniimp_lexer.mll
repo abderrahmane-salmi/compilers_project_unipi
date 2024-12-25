@@ -23,6 +23,8 @@ rule read = parse
   | ";" { SEMICOLON }
   | "(" { LPAREN }
   | ")" { RPAREN }
+  | "{" { LCURLY }
+  | "}" { RCURLY }
   | "<" { LESS }
   | "+" { PLUS }
   | "-" { MINUS }
