@@ -1,4 +1,77 @@
+(* let () =
+  if Array.length Sys.argv != 2 then
+    failwith "Argument MiniFun-program is needed";
+  let in_file = open_in Sys.argv.(1) in
+  let lexbuf = Lexing.from_channel in_file in
+  Miniimp_parser.program Miniimp_lexer.read lexbuf
+  (* let program = (Miniimp_parser.program Miniimp_lexer.read lexbuf) in
+    print_int (Aexp.eval(program));
+    print_newline() *) *)
+
 let () = Printf.printf "Started MiniImp Main"
+
+open Miniimp
+open MiniImp
+
+(* Function to read the content of a file *)
+let read_file filename =
+  let ic = open_in filename in
+  let rec read_lines acc =
+    try
+      let line = input_line ic in
+      read_lines (acc ^ "\n" ^ line)
+    with End_of_file ->
+      close_in ic;
+      acc
+  in
+  read_lines ""
+
+(* Main function to run the MiniImp interpreter *)
+let () =
+  (* Ensure a filename is provided *)
+  if Array.length Sys.argv <> 2 then
+    (print_endline "Usage: miniimp <filename>";
+     exit 1);
+  
+  let filename = Sys.argv.(1) in
+  try
+    (* Read and parse the MiniImp file *)
+    let file_content = read_file filename in
+    let lexbuf = Lexing.from_string file_content in
+    let ast = Miniimp_parser.program Miniimp_lexer.read lexbuf in
+
+    (* Initialize the environment and evaluate the program *)
+    let initial_env = [] in
+    let final_env = eval_com initial_env ast in
+
+    (* Output the final environment *)
+    print_endline "Program executed successfully.";
+    print_endline "Final environment:";
+    List.iter (fun (var, value) -> Printf.printf "%s = %d\n" var value) final_env;
+
+  with
+  | Miniimp_lexer.LexingError msg ->
+      Printf.eprintf "Lexical error: %s\n" msg;
+      exit 1
+  | Miniimp_parser.Error ->
+      Printf.eprintf "Syntax error\n";
+      exit 1
+  | Failure msg ->
+      Printf.eprintf "Runtime error: %s\n" msg;
+      exit 1
+
+
+(* let parse_file filename =
+  let channel = open_in filename in
+  let lexbuf = Miniimp_lexer.from_channel channel in
+  try
+    Miniimp_parser.program Miniimp_lexer.token lexbuf
+  with
+  | Miniimp_lexer.LexingError msg -> failwith ("Lexer error: " ^ msg)
+  | Miniimp_parser.Error -> failwith "Parser error" *)
+
+
+(* let () = Printf.printf "Started MiniImp Main"
 
 open Miniimp
 open MiniImp
@@ -141,4 +214,4 @@ let () =
   Printf.printf "\n";
   test_program_3 ();
   Printf.printf "\n";
-  test_program_4 ();
+  test_program_4 (); *)

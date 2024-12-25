@@ -4,7 +4,7 @@
 }
 
 rule read = parse
-  | [' ' '\t' '\n'] { token lexbuf } (* Skip whitespace *)
+  | [' ' '\t' '\n'] { read lexbuf } (* Skip whitespace *)
   | ['0'-'9']+ as num { NUM (int_of_string num) }
   | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9']* as id { ID id }
   | ":=" { ASSIGN }
