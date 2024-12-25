@@ -25,7 +25,7 @@ com:
   SKIP { Skip }
 | VAR ASSIGN aexp { Assign($1, $3) }
 | com SEMICOLON com { Seq($1, $3) }
-| IF bexp THEN com ELSE com { If($2, $4, $6) }
+| IF bexp THEN LCURLY com RCURLY ELSE LCURLY com RCURLY { If($2, $5, $9) }
 | WHILE bexp DO LCURLY com RCURLY { While($2, $5) }
 
 // HOW TO recogize bool values?
