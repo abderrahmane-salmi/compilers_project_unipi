@@ -1,0 +1,12 @@
+(lang dune 2.0)
+(name miniimp)
+
+(using menhir 2.0)
+
+(package
+ (name miniimp)
+ (synopsis "A short synopsis")
+ (description "A longer description")
+ (depends ocaml dune ocamllex menhir ppx_deriving) 
+ (tags
+  (topics "to describe" your project)))
