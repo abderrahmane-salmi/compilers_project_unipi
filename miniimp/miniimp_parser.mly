@@ -1,38 +1,36 @@
 %{
-  open Miniimp
-  open MiniImp
+  open Ast
 %}
 
+%token <string> VAR
 %token <int> NUM
-%token <string> ID
-%token ASSIGN SEMICOLON PLUS MINUS TIMES
-%token LPAREN RPAREN LESS SKIP IF THEN ELSE WHILE DO
-%token EOF
+%token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND ASSIGN SEMICOLON LPAREN RPAREN LESS PLUS MINUS TIMES EOF
 
-%type <MiniImp.com> command
-%type <MiniImp.aexp> aexp
-%type <MiniImp.bexp> bexp
+%start program
+%type <Ast.program> program
 
-%start <MiniImp.com> program
 %%
 
 program:
-  | command EOF { $1 }
+  DEF MAIN WITH INPUT VAR OUTPUT VAR AS com EOF { Main($5, $7, $9) }
 
-command:
-  | SKIP { Skip }
-  | ID ASSIGN aexp SEMICOLON { Assign ($1, $3) }
-  | command SEMICOLON command { Seq ($1, $3) }
-  | IF bexp THEN command ELSE command { If ($2, $4, $6) }
-  | WHILE bexp DO command { While ($2, $4) }
+com:
+  SKIP { Skip }
+| VAR ASSIGN aexp { Assign($1, $3) }
+| com SEMICOLON com { Seq($1, $3) }
+| IF bexp THEN com ELSE com { If($2, $4, $6) }
+| WHILE bexp DO com { While($2, $4) }
+
+// HOW TO recogize bool values?
+bexp:
+  bexp AND bexp { And($1, $3) }
+| NOT bexp { Not($2) }
+| aexp LESS aexp { Less($1, $3) }
 
 aexp:
-  | NUM { Num $1 }
-  | ID { Var $1 }
-  | aexp PLUS aexp { Plus ($1, $3) }
-  | aexp MINUS aexp { Minus ($1, $3) }
-  | aexp TIMES aexp { Times ($1, $3) }
-  | LPAREN aexp RPAREN { $2 }
-
-bexp:
-  | aexp LESS aexp { Less ($1, $3) }
+  VAR { Var($1) }
+| NUM { Num($1) }
+| aexp PLUS aexp { Plus($1, $3) }
+| aexp MINUS aexp { Minus($1, $3) }
+| aexp TIMES aexp { Times($1, $3) }
+| LPAREN aexp RPAREN { $2 }

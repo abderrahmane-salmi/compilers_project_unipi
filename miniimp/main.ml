@@ -10,8 +10,7 @@
 
 let () = Printf.printf "Started MiniImp Main"
 
-open Miniimp
-open MiniImp
+open Semantics
 
 (* Function to read the content of a file *)
 let read_file filename =
@@ -42,7 +41,7 @@ let () =
 
     (* Initialize the environment and evaluate the program *)
     let initial_env = [] in
-    let final_env = eval_com initial_env ast in
+    let final_env = eval_prg initial_env ast in
 
     (* Output the final environment *)
     print_endline "Program executed successfully.";
