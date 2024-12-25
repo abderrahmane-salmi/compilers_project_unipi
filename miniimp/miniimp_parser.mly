@@ -6,6 +6,11 @@
 %token <int> NUM
 %token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND ASSIGN SEMICOLON LPAREN RPAREN LESS PLUS MINUS TIMES EOF
 
+(* Precedence and Associativity Declarations *)
+%left PLUS MINUS  (* Left-associative for addition and subtraction *)
+%left TIMES       (* Left-associative for multiplication *)
+%right SEMICOLON  (* Right-associative for command sequencing *)
+
 %start program
 %type <Ast.program> program
 
