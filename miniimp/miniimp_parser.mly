@@ -9,7 +9,9 @@
 (* Precedence and Associativity Declarations *)
 %left PLUS MINUS  (* Left-associative for addition and subtraction *)
 %left TIMES       (* Left-associative for multiplication *)
-%right SEMICOLON  (* Right-associative for command sequencing *)
+%right NOT
+%left AND
+%nonassoc SEMICOLON  (* nonassoc for command sequencing *)
 
 %start program
 %type <Ast.program> program
