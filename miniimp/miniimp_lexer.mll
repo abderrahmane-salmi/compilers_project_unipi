@@ -31,5 +31,7 @@ rule read = parse
   | "*" { TIMES }
   | ['a'-'z']+ as id { VAR id }
   | ['0'-'9']+ as num { NUM (int_of_string num) }
+  | "true" { TRUE }
+  | "false" { FALSE }
   | eof { EOF }
   | _ { failwith "Unrecognized character" }

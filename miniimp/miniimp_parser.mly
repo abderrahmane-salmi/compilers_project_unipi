@@ -4,14 +4,18 @@
 
 %token <string> VAR
 %token <int> NUM
-%token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND ASSIGN SEMICOLON LPAREN RPAREN LCURLY RCURLY LESS PLUS MINUS TIMES EOF
+%token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND TRUE FALSE ASSIGN SEMICOLON LPAREN RPAREN LCURLY RCURLY LESS PLUS MINUS TIMES EOF
 
 (* Precedence and Associativity Declarations *)
 %left PLUS MINUS  (* Left-associative for addition and subtraction *)
 %left TIMES       (* Left-associative for multiplication *)
-%right NOT
 %left AND
-%nonassoc SEMICOLON  (* nonassoc for command sequencing *)
+%right NOT
+%left SEMICOLON  (* nonassoc for command sequencing *)
+
+%type <Ast.com> com
+%type <Ast.aexp> aexp
+%type <Ast.bexp> bexp
 
 %start program
 %type <Ast.program> program
@@ -28,11 +32,13 @@ com:
 | IF bexp THEN LCURLY com RCURLY ELSE LCURLY com RCURLY { If($2, $5, $9) }
 | WHILE bexp DO LCURLY com RCURLY { While($2, $5) }
 
-// HOW TO recogize bool values?
+// TODO: HOW TO recogize bool values?
 bexp:
-  bexp AND bexp { And($1, $3) }
-| NOT bexp { Not($2) }
+  NOT bexp { Not($2) }
+| bexp AND bexp { And($1, $3) }
 | aexp LESS aexp { Less($1, $3) }
+| TRUE { Bool(true) }
+| FALSE { Bool(false) }
 
 aexp:
   VAR { Var($1) }
