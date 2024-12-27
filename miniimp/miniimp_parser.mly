@@ -23,14 +23,14 @@
 %%
 
 program:
-  DEF MAIN WITH INPUT VAR OUTPUT VAR AS com EOF { Main($5, $7, $9) }
+  DEF MAIN WITH INPUT input = VAR OUTPUT output = VAR AS c = com EOF { Main(input, output, c) }
 
 com:
   SKIP { Skip }
-| VAR ASSIGN aexp { Assign($1, $3) }
-| com SEMICOLON com { Seq($1, $3) }
-| IF bexp THEN LCURLY com RCURLY ELSE LCURLY com RCURLY { If($2, $5, $9) }
-| WHILE bexp DO LCURLY com RCURLY { While($2, $5) }
+| x = VAR ASSIGN a = aexp { Assign(x, a) }
+| c1 = com SEMICOLON c2 = com { Seq(c1, c2) }
+| IF b = bexp THEN LCURLY c1 = com RCURLY ELSE LCURLY c2 = com RCURLY { If(b, c1, c2) }
+| WHILE b = bexp DO LCURLY c = com RCURLY { While(b, c) }
 
 // TODO: HOW TO recogize bool values?
 bexp:
