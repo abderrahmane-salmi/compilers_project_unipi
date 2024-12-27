@@ -8,9 +8,54 @@
     print_int (Aexp.eval(program));
     print_newline() *) *)
 
-let () = Printf.printf "Started MiniImp Main"
-
+(* Open the necessary modules *)
 open Semantics
+open Printf
+
+let read_file filename =
+  try
+    let chan = open_in filename in
+    let lexbuf = Lexing.from_channel chan in
+    let result = 
+      try
+        let program = Miniimp_parser.program Miniimp_lexer.read lexbuf in
+        close_in chan;
+        program
+      with
+      | Miniimp_parser.Error -> 
+          fprintf stderr "Parse error at line %d, column %d\n" 
+            lexbuf.Lexing.lex_start_p.Lexing.pos_lnum
+            (lexbuf.Lexing.lex_start_p.Lexing.pos_cnum - 
+              lexbuf.Lexing.lex_start_p.Lexing.pos_bol);
+          close_in chan;
+          exit 1
+      | _ ->
+          fprintf stderr "Unexpected error during parsing\n";
+          close_in chan;
+          exit 1
+    in
+    result
+  with Sys_error _ ->
+    fprintf stderr "Error opening file: %s\n" filename;
+    exit 1
+
+let run_program filename =
+  let program = read_file filename in
+  let env = [] in  (* Initialize an empty environment *)
+  let final_env = eval_prg env program in
+  printf "Execution complete.\n";
+  (* Optionally print the environment or final result *)
+  List.iter (fun (var, value) -> printf "%s = %d\n" var value) final_env
+
+let () =
+  if Array.length Sys.argv < 2 then
+    (Printf.eprintf "Usage: %s <filename.miniimp>\n" Sys.argv.(0);
+     exit 1)
+  else
+    let filename = Sys.argv.(1) in
+    run_program filename
+
+(* open Semantics
 
 (* Function to read the content of a file *)
 let read_file filename =
@@ -32,6 +77,7 @@ let () =
     (print_endline "Usage: miniimp <filename>";
      exit 1);
   
+  Printf.printf "MiniImp started:\n";
   let filename = Sys.argv.(1) in
   try
     (* Read and parse the MiniImp file *)
@@ -57,7 +103,7 @@ let () =
       exit 1
   | Failure msg ->
       Printf.eprintf "Runtime error: %s\n" msg;
-      exit 1
+      exit 1 *)
 
 
 (* let parse_file filename =
