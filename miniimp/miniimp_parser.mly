@@ -7,16 +7,20 @@
 %token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND TRUE FALSE ASSIGN SEMICOLON LPAREN RPAREN LCURLY RCURLY LESS PLUS MINUS TIMES EOF
 
 (* Precedence and Associativity Declarations *)
-%left PLUS MINUS  (* Left-associative for addition and subtraction *)
-%left TIMES       (* Left-associative for multiplication *)
-%left AND
-%right NOT
-%left SEMICOLON  (* nonassoc for command sequencing *)
+%left PLUS MINUS
+%left TIMES
 
+%left AND
+%nonassoc NOT
+
+%left SEMICOLON
+
+(* Type Declarations *)
 %type <Ast.com> com
 %type <Ast.aexp> aexp
 %type <Ast.bexp> bexp
 
+(* Start Symbol *)
 %start program
 %type <Ast.program> program
 
