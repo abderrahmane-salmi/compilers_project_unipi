@@ -7,7 +7,7 @@
 %token <string> IDENT
 %token EQ PLUS MINUS TIMES LESS AND NOT
 %token IF THEN ELSE FUN LET IN LETFUN ARROW
-%token LPAREN RPAREN SEMI EOF
+%token LPAREN RPAREN EOF
 
 (* Precedence and Associativity Declarations *)
 
