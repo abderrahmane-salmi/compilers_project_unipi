@@ -10,6 +10,9 @@
 %token LPAREN RPAREN SEMI EOF
 
 (* Precedence and Associativity Declarations *)
+%nonassoc THEN
+%nonassoc ELSE
+
 %left PLUS MINUS
 %left TIMES
 
