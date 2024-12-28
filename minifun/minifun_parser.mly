@@ -10,13 +10,9 @@
 %token LPAREN RPAREN SEMI EOF
 
 (* Precedence and Associativity Declarations *)
-%nonassoc THEN
-%nonassoc ELSE
 
 %left PLUS MINUS
 %left TIMES
-
-%left LESS
 
 %left AND
 %nonassoc NOT
@@ -30,22 +26,44 @@
 
 %%
 
+(* Program: top-level entry point *)
 program:
   | expr EOF { $1 }
 
+(* Expression can be either an arithmetic or boolean expression or function app *)
 expr:
+  | aexp { $1 }
+  | bexp { $1 }
+  | let_expr { $1 }
+  | letfun_expr { $1 }
+  | app_expr { $1 }
+
+(* Non-terminal for arithmetic expressions (aexp) *)
+aexp:
   | INT { IntLit $1 }
-  | BOOL { BoolLit $1 }
   | IDENT { Var $1 }
-  | expr PLUS expr { Op ($1, Add, $3) }
-  | expr MINUS expr { Op ($1, Sub, $3) }
-  | expr TIMES expr { Op ($1, Mul, $3) }
-  | expr LESS expr { Op ($1, Less, $3) }
-  | expr AND expr { Op ($1, And, $3) }
-  | NOT expr { Op ($2, Not, $2) }
-  | IF expr THEN expr ELSE expr { If ($2, $4, $6) }
-  | FUN IDENT ARROW expr { Fun ($2, $4) }
+  | aexp PLUS aexp { Op ($1, Add, $3) }
+  | aexp MINUS aexp { Op ($1, Sub, $3) }
+  | aexp TIMES aexp { Op ($1, Mul, $3) }
+  | LPAREN aexp RPAREN { $2 }
+
+(* Non-terminal for boolean expressions (bexp) *)
+bexp:
+  | BOOL { BoolLit $1 }
+  | bexp AND bexp { Op ($1, And, $3) }
+  | NOT bexp { Op ($2, Not, $2) }
+  | aexp LESS aexp { Op ($1, Less, $3) }
+  | IF bexp THEN expr ELSE expr { If ($2, $4, $6) }
+
+(* Non-terminal for let bindings *)
+let_expr:
   | LET IDENT EQ expr IN expr { Let ($2, $4, $6) }
+
+(* Non-terminal for recursive function definitions *)
+letfun_expr:
   | LETFUN IDENT IDENT EQ expr IN expr { Letfun ($2, $3, $5, $7) }
-  | expr expr { App ($1, $2) }
-  | LPAREN expr RPAREN { $2 }
+
+(* Non-terminal for function applications *)
+app_expr:
+  | FUN IDENT ARROW expr { Fun ($2, $4) }
+  | app_expr expr { App ($1, $2) }
