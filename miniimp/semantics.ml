@@ -69,6 +69,10 @@ let rec eval_com (env: environment) (c: com) : environment =
         eval_com env_ (While (b, c))  (* Loop while b is true *)
       else env  (* Exit the loop when b is false *)
 
-let eval_prg (env: environment) (p: program) : environment =
+let eval_prg (env: environment) (p: program) (input_value: int) : environment =
   match p with
-  | Main (_, _, c) -> eval_com env c
+  | Main (x, _, c) -> (
+      (* Extend the environment with the input value *)
+      let env_ = extend env x input_value in
+      eval_com env_ c
+  )
