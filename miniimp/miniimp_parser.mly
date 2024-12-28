@@ -13,6 +13,8 @@
 %left AND
 %nonassoc NOT
 
+%left DO
+
 %left SEMICOLON
 
 (* Type Declarations *)
@@ -34,7 +36,8 @@ com:
 | x = VAR ASSIGN a = aexp { Assign(x, a) }
 | c1 = com SEMICOLON c2 = com { Seq(c1, c2) }
 | IF b = bexp THEN LCURLY c1 = com RCURLY ELSE LCURLY c2 = com RCURLY { If(b, c1, c2) }
-| WHILE b = bexp DO LCURLY c = com RCURLY { While(b, c) }
+| WHILE b = bexp DO c = com { While(b, c) }
+| LPAREN c = com RPAREN { c }
 
 // TODO: HOW TO recogize bool values?
 bexp:
@@ -50,4 +53,4 @@ aexp:
 | aexp PLUS aexp { Plus($1, $3) }
 | aexp MINUS aexp { Minus($1, $3) }
 | aexp TIMES aexp { Times($1, $3) }
-| LPAREN aexp RPAREN { $2 }
+| LPAREN a = aexp RPAREN { a }
