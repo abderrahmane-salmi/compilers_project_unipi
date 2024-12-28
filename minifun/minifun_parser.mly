@@ -5,12 +5,18 @@
 %token <int> INT
 %token <bool> BOOL
 %token <string> IDENT
-%token EQ ADD SUB MUL LESS AND NOT
+%token EQ PLUS MINUS TIMES LESS AND NOT
 %token IF THEN ELSE FUN LET IN LETFUN ARROW
 %token LPAREN RPAREN SEMI EOF
 
 (* Precedence and Associativity Declarations *)
+%left PLUS MINUS
+%left TIMES
 
+%left LESS
+
+%left AND
+%nonassoc NOT
 
 (* Type Declarations *)
 
@@ -28,9 +34,9 @@ expr:
   | INT { IntLit $1 }
   | BOOL { BoolLit $1 }
   | IDENT { Var $1 }
-  | expr ADD expr { Op ($1, Add, $3) }
-  | expr SUB expr { Op ($1, Sub, $3) }
-  | expr MUL expr { Op ($1, Mul, $3) }
+  | expr PLUS expr { Op ($1, Add, $3) }
+  | expr MINUS expr { Op ($1, Sub, $3) }
+  | expr TIMES expr { Op ($1, Mul, $3) }
   | expr LESS expr { Op ($1, Less, $3) }
   | expr AND expr { Op ($1, And, $3) }
   | NOT expr { Op ($2, Not, $2) }

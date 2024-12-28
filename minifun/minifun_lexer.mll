@@ -10,9 +10,9 @@ rule read = parse
   | "false"         { BOOL false }
   | ['a'-'z' 'A'-'Z' '_']['a'-'z' 'A'-'Z' '0'-'9' '_']* as id { IDENT id }
   | "="             { EQ }
-  | "+"             { ADD }
-  | "-"             { SUB }
-  | "*"             { MUL }
+  | "+"             { PLUS }
+  | "-"             { MINUS }
+  | "*"             { TIMES }
   | "<"             { LESS }
   | "&&"            { AND }
   | "not"           { NOT }
