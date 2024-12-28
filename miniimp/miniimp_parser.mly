@@ -7,6 +7,8 @@
 %token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND TRUE FALSE ASSIGN SEMICOLON LPAREN RPAREN LCURLY RCURLY LESS PLUS MINUS TIMES EOF
 
 (* Precedence and Associativity Declarations *)
+%nonassoc ELSE
+
 %left PLUS MINUS
 %left TIMES
 
@@ -35,7 +37,7 @@ com:
   SKIP { Skip }
 | x = VAR ASSIGN a = aexp { Assign(x, a) }
 | c1 = com SEMICOLON c2 = com { Seq(c1, c2) }
-| IF b = bexp THEN LCURLY c1 = com RCURLY ELSE LCURLY c2 = com RCURLY { If(b, c1, c2) }
+| IF b = bexp THEN c1 = com ELSE c2 = com { If(b, c1, c2) }
 | WHILE b = bexp DO c = com { While(b, c) }
 | LPAREN c = com RPAREN { c }
 
