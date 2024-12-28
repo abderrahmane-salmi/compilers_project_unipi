@@ -21,7 +21,7 @@ let eval_program program =
 
 let () =
   if Array.length Sys.argv < 2 then
-    Printf.printf "Usage: %s <program.mf>\n" Sys.argv.(0)
+    Printf.printf "Usage: %s <program.minifun>\n" Sys.argv.(0)
   else
     let program = parse_file Sys.argv.(1) in
     eval_program program
