@@ -18,7 +18,12 @@
 %nonassoc NOT
 
 (* Type Declarations *)
-
+%type <Ast.expr> expr
+%type <Ast.expr> aexp
+%type <Ast.expr> bexp
+%type <Ast.expr> let_expr
+%type <Ast.expr> letfun_expr
+%type <Ast.expr> app_expr
 
 (* Start Symbol *)
 %start program
