@@ -66,7 +66,7 @@ let_expr:
 
 (* Non-terminal for recursive function definitions *)
 letfun_expr:
-  | LETFUN IDENT IDENT EQ expr IN expr { Letfun ($2, $3, $5, $7) }
+  | LETFUN f = IDENT x = IDENT EQ t1 = expr IN t2 = expr { Letfun (f, x, t1, t2) }
 
 (* Non-terminal for function applications *)
 app_expr:
