@@ -26,5 +26,6 @@ rule read = parse
   | "=>"            { ARROW }
   | "("             { LPAREN }
   | ")"             { RPAREN }
+  | ";"             { SEMICOLON }
   | eof             { EOF }
   | _ as char       { raise (LexingError ("Unexpected character: " ^ String.make 1 char)) }

@@ -7,7 +7,7 @@
 %token <string> IDENT
 %token EQ PLUS MINUS TIMES LESS AND NOT
 %token IF THEN ELSE FUN LET IN LETFUN ARROW
-%token LPAREN RPAREN EOF
+%token LPAREN RPAREN EOF SEMICOLON
 
 (* Precedence and Associativity Declarations *)
 
@@ -25,6 +25,7 @@
 %type <Ast.expr> letfun_expr
 %type <Ast.expr> app_expr
 %type <Ast.expr> if_expr
+%type <Ast.expr> fun_expr
 
 (* Start Symbol *)
 %start program
@@ -44,6 +45,7 @@ expr:
   | letfun_expr { $1 }
   | app_expr { $1 }
   | if_expr { $1 }
+  | fun_expr { $1 }
 
 (* Non-terminal for arithmetic expressions (aexp) *)
 aexp:
@@ -71,10 +73,16 @@ letfun_expr:
 
 (* Non-terminal for function applications *)
 app_expr:
-  | FUN f = IDENT ARROW t = expr n = INT { App (Fun (f, t), IntLit n) }
-  | FUN f = IDENT ARROW t = expr x = IDENT { App (Fun (f, t), Var x) }
-  | f = IDENT x = IDENT { App (Var f, Var x) }
-  | f = IDENT n = INT { App (Var f, IntLit n) }
+  | t1 = fun_expr LPAREN t2 = aexp RPAREN { App (t1, t2) }
+  | t1 = fun_expr LPAREN t2 = fun_expr RPAREN { App (t1, t2) }
+  // | FUN f = IDENT ARROW t = expr n = INT { App (Fun (f, t), IntLit n) }
+  // | FUN f = IDENT ARROW t = expr x = IDENT { App (Fun (f, t), Var x) }
+  // | f = IDENT x = IDENT { App (Var f, Var x) }
+  // | f = IDENT n = INT { App (Var f, IntLit n) }
 
+fun_expr:
+  | FUN f = IDENT ARROW t = expr SEMICOLON { Fun (f, t) }
+
+(* Non-terminal for if expressions *)
 if_expr:
   | IF expr THEN expr ELSE expr { If ($2, $4, $6) }
