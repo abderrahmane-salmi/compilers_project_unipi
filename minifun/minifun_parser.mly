@@ -43,9 +43,9 @@ expr:
   | bexp { $1 }
   | let_expr { $1 }
   | letfun_expr { $1 }
+  | fun_expr { $1 }
   | app_expr { $1 }
   | if_expr { $1 }
-  | fun_expr { $1 }
 
 (* Non-terminal for arithmetic expressions (aexp) *)
 aexp:
@@ -71,17 +71,14 @@ let_expr:
 letfun_expr:
   | LETFUN f = IDENT x = IDENT EQ t1 = expr IN t2 = expr { Letfun (f, x, t1, t2) }
 
+(* Non-terminal for function definitions *)
+fun_expr:
+  | FUN f = IDENT ARROW t = expr SEMICOLON { Fun (f, t) }
+
 (* Non-terminal for function applications *)
 app_expr:
   | t1 = fun_expr LPAREN t2 = aexp RPAREN { App (t1, t2) }
   | t1 = fun_expr LPAREN t2 = fun_expr RPAREN { App (t1, t2) }
-  // | FUN f = IDENT ARROW t = expr n = INT { App (Fun (f, t), IntLit n) }
-  // | FUN f = IDENT ARROW t = expr x = IDENT { App (Fun (f, t), Var x) }
-  // | f = IDENT x = IDENT { App (Var f, Var x) }
-  // | f = IDENT n = INT { App (Var f, IntLit n) }
-
-fun_expr:
-  | FUN f = IDENT ARROW t = expr SEMICOLON { Fun (f, t) }
 
 (* Non-terminal for if expressions *)
 if_expr:
