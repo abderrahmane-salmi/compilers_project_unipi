@@ -24,6 +24,7 @@
 %type <Ast.expr> let_expr
 %type <Ast.expr> letfun_expr
 %type <Ast.expr> app_expr
+%type <Ast.expr> if_expr
 
 (* Start Symbol *)
 %start program
