@@ -70,6 +70,6 @@ letfun_expr:
 
 (* Non-terminal for function applications *)
 app_expr:
-  | FUN IDENT ARROW expr { Fun ($2, $4) }
+  | FUN x = IDENT ARROW t = expr { Fun (x, t) }
   | app_expr INT { App ($1, IntLit $2) }
   | app_expr IDENT { App ($1, Var $2) }
