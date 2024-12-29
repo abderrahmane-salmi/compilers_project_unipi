@@ -42,6 +42,7 @@ expr:
   | let_expr { $1 }
   | letfun_expr { $1 }
   | app_expr { $1 }
+  | if_expr { $1 }
 
 (* Non-terminal for arithmetic expressions (aexp) *)
 aexp:
@@ -58,7 +59,6 @@ bexp:
   | bexp AND bexp { Op ($1, And, $3) }
   | NOT bexp { Op ($2, Not, $2) }
   | aexp LESS aexp { Op ($1, Less, $3) }
-  | IF bexp THEN expr ELSE expr { If ($2, $4, $6) }
 
 (* Non-terminal for let bindings *)
 let_expr:
@@ -74,3 +74,6 @@ app_expr:
   | FUN f = IDENT ARROW t = expr x = IDENT { App (Fun (f, t), Var x) }
   | f = IDENT x = IDENT { App (Var f, Var x) }
   | f = IDENT n = INT { App (Var f, IntLit n) }
+
+if_expr:
+  | IF expr THEN expr ELSE expr { If ($2, $4, $6) }
