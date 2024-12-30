@@ -57,6 +57,7 @@ aexp:
   | LPAREN aexp RPAREN { $2 }
 
 (* Non-terminal for boolean expressions (bexp) *)
+// TODO: should we handle bool values? true and false, like in miniimp?
 bexp:
   | BOOL { BoolLit $1 }
   | bexp AND bexp { Op ($1, And, $3) }
