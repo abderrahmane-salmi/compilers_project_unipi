@@ -77,10 +77,10 @@ fun_expr:
 
 (* Non-terminal for function applications *)
 app_expr:
-  | t1 = fun_expr LPAREN t2 = aexp RPAREN { App (t1, t2) }
-  | t1 = fun_expr LPAREN t2 = fun_expr RPAREN { App (t1, t2) }
-  | t1 = IDENT LPAREN t2 = aexp RPAREN { App (t1, t2) }
-  | t1 = IDENT LPAREN t2 = fun_expr RPAREN { App (t1, t2) }
+  | t1 = fun_expr t2 = aexp { App (t1, t2) }
+  | t1 = fun_expr t2 = fun_expr { App (t1, t2) }
+  | t1 = IDENT t2 = aexp { App (t1, t2) }
+  | t1 = IDENT t2 = fun_expr { App (t1, t2) }
 
 (* Non-terminal for if expressions *)
 if_expr:
