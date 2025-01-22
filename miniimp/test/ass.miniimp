@@ -1,0 +1,3 @@
+def main with input in output out as
+  out := 5;
+  out := out + 2
