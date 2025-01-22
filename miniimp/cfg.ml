@@ -42,9 +42,11 @@ let generate_cfg program =
         let blocks1, edges1 = process_com com1 in
         let blocks2, edges2 = process_com com2 in
         let final_block = create_block Skip in
-        (blocks1 @ blocks2 @ [final_block], edges1 @ edges2 @ [
-          ControlFlow (List.hd (List.rev blocks1), List.hd blocks2)
-        ])
+        let edges = edges1 @ edges2 @ [
+            ControlFlow (List.hd (List.rev blocks1), List.hd blocks2);  (* From last block of com1 to first block of com2 *)
+            ControlFlow (List.hd (List.rev blocks2), final_block);     (* From last block of com2 to the final skip block *)
+        ] in
+        (blocks1 @ blocks2 @ [final_block], edges)
     | If (b, com1, com2) -> 
         let blocks1, edges1 = process_com com1 in
         let blocks2, edges2 = process_com com2 in
