@@ -1,3 +1,0 @@
-def main with input in output out as
-  x := in;
-  out := x * x
