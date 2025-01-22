@@ -41,12 +41,10 @@ let generate_cfg program =
     | Seq (com1, com2) -> 
         let blocks1, edges1 = process_com com1 in
         let blocks2, edges2 = process_com com2 in
-        let final_block = create_block Skip in
-        let edges = edges1 @ edges2 @ [
-            ControlFlow (List.hd (List.rev blocks1), List.hd blocks2);  (* From last block of com1 to first block of com2 *)
-            ControlFlow (List.hd (List.rev blocks2), final_block);     (* From last block of com2 to the final skip block *)
-        ] in
-        (blocks1 @ blocks2 @ [final_block], edges)
+        (* Directly connect the last block of com1 to the first block of com2 *)
+        (blocks1 @ blocks2, edges1 @ edges2 @ [
+          ControlFlow (List.hd (List.rev blocks1), List.hd blocks2)
+        ])
     | If (b, com1, com2) -> 
         let blocks1, edges1 = process_com com1 in
         let blocks2, edges2 = process_com com2 in
@@ -58,14 +56,24 @@ let generate_cfg program =
         ] in
         (decision_block :: blocks1 @ blocks2 @ [final_block], edges)
     | While (b, com) -> 
-        let blocks, edges = process_com com in
-        let loop_block = create_block (While (b, com)) in
+        (* Process the loop body (com) to get the blocks and edges *)
+        let body_blocks, body_edges = process_com com in
+
+        (* Create a node for the loop condition *)
+        let condition_block = create_block (While (b, com)) in
+
+        (* Create a node for the exit block *)
         let exit_block = create_block Skip in
-        let edges = edges @ [
-          ControlFlow (loop_block, List.hd blocks);
-          ControlFlow (List.hd blocks, exit_block)
+
+        (* We now define the edges: *)
+        let edges = body_edges @ [
+          ControlFlow (condition_block, List.hd body_blocks);  (* From loop condition to loop body if condition is true *)
+          ControlFlow (condition_block, exit_block);  (* From loop condition to exit if condition is false *)
+          ControlFlow (List.hd (List.rev body_blocks), condition_block);  (* From last block in loop body to loop condition *)
         ] in
-        (loop_block :: blocks @ [exit_block], edges)
+
+        (* Return the nodes and edges *)
+        (condition_block :: body_blocks @ [exit_block], edges)
   in
 
   (* Start generating CFG from the main program *)
