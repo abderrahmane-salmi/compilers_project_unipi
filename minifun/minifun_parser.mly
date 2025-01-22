@@ -80,8 +80,8 @@ fun_expr:
 app_expr:
   | t1 = fun_expr t2 = aexp { App (t1, t2) }
   | t1 = fun_expr t2 = fun_expr { App (t1, t2) }
-  | t1 = IDENT t2 = aexp { App (t1, t2) }
-  | t1 = IDENT t2 = fun_expr { App (t1, t2) }
+  | t1 = IDENT t2 = aexp { App (Var t1, t2) }
+  | t1 = IDENT t2 = fun_expr { App (Var t1, t2) }
 
 (* Non-terminal for if expressions *)
 if_expr:
