@@ -41,10 +41,10 @@ let generate_cfg program =
     | Seq (com1, com2) -> 
         let blocks1, edges1 = process_com com1 in
         let blocks2, edges2 = process_com com2 in
-        (* Directly connect the last block of com1 to the first block of com2 *)
-        (blocks1 @ blocks2, edges1 @ edges2 @ [
-          ControlFlow (List.hd (List.rev blocks1), List.hd blocks2)
-        ])
+        let edges = edges1 @ edges2 @ [
+          ControlFlow (List.hd (List.rev blocks1), List.hd blocks2) (* From last block of com1 to first block of com2 *)
+        ] in
+        (blocks1 @ blocks2, edges)
     | If (b, com1, com2) -> 
         let blocks1, edges1 = process_com com1 in
         let blocks2, edges2 = process_com com2 in
