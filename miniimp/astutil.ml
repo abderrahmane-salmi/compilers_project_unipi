@@ -1,3 +1,7 @@
+(* This file contains utility functions that convert Abstract Syntax Tree (AST) expressions and
+commands into string representations.
+Ex: *)
+
 let rec string_of_aexp (a: Ast.aexp) : string =
   match a with
   | Ast.Num n -> string_of_int n
