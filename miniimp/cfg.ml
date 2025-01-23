@@ -51,8 +51,10 @@ let generate_cfg program =
         let decision_block = create_block (If (b, com1, com2)) in
         let final_block = create_block Skip in
         let edges = edges1 @ edges2 @ [
-          ControlFlow (decision_block, List.hd blocks1);
-          ControlFlow (decision_block, List.hd blocks2);
+          ControlFlow (decision_block, List.hd blocks1); (* From decision block to true branch *)
+          ControlFlow (decision_block, List.hd blocks2); (* From decision block to false branch *)
+          ControlFlow (List.hd (List.rev blocks1), final_block); (* From last block in true branch to final block *)
+          ControlFlow (List.hd (List.rev blocks2), final_block); (* From last block in false branch to final block *)
         ] in
         (decision_block :: blocks1 @ blocks2 @ [final_block], edges)
     | While (b, com) -> 
