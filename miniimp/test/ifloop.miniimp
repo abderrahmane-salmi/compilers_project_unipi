@@ -1,0 +1,10 @@
+def main with input in output out as
+  out := 0;
+  if in < 5 then(
+    out := in + 10
+  )
+  else
+    while not in < 0 do (
+      out := out + in;
+      in := in - 1
+    )
