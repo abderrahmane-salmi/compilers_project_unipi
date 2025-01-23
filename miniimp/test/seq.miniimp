@@ -1,0 +1,5 @@
+def main with input in output out as
+  out := in;
+  out := out + 4;
+  out := out - 2;
+  out := out - 1
