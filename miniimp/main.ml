@@ -23,7 +23,7 @@ let () =
       exit 1
   in
 
-  (* Now we read the integer input from the user via standard input *)
+  (* Read the integer input from the user via standard input *)
   Printf.printf "Enter an integer: ";
   let input_value = int_of_string (read_line ()) in
 
@@ -33,7 +33,7 @@ let () =
   (* Extract the command (com) from the program (Main) *)
   let Main(_, _, com) = program in
 
-  (* Generate the Control Flow Graph (CFG) for the program *)
+  (* Generate the Control Flow Graph (CFG) for the program (i.e. its com) *)
   let cfg = generate_cfg com in
 
   (* Print the CFG - Nodes and Edges *)
