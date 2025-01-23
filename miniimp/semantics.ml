@@ -68,6 +68,14 @@ let rec eval_com (env: environment) (c: com) : environment =
         let env_ = eval_com env c in
         eval_com env_ (While (b, c))  (* Loop while b is true *)
       else env  (* Exit the loop when b is false *)
+  | BQuestion b -> 
+    (* Just evaluate the boolean expression and do nothing else
+    'ignore' is used to discard the result of 'eval_bexp env b' because we don't need the boolean value. 
+    It prevents a compiler warning about an unused result and ensures the environment 'env' remains unchanged.
+    'ignore' is a built-in OCaml function that returns '()' after discarding any value.
+    *)
+    ignore (eval_bexp env b); 
+    env
 
 let eval_prg (env: environment) (p: program) (input_value: int) : environment =
   match p with

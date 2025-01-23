@@ -25,3 +25,4 @@ and com =
   | Seq of com * com      (* Sequence of commands *)
   | If of bexp * com * com (* If-then-else *)
   | While of bexp * com  (* While loop *)
+  | BQuestion of bexp  (* Boolean conditional expression to represent b? -- used in cfg *)

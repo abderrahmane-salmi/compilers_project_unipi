@@ -38,6 +38,9 @@ let generate_cfg program =
     | Assign (var, aexp) -> 
         let block = create_block (Assign (var, aexp)) in
         ([block], [])  (* No outgoing edges for a single assignment block *)
+    | BQuestion b ->
+        let block = create_block (BQuestion b) in
+        ([block], [])  (* No outgoing edges for a single boolean question block *)
     | Seq (com1, com2) -> 
         let blocks1, edges1 = process_com com1 in
         let blocks2, edges2 = process_com com2 in
@@ -48,7 +51,7 @@ let generate_cfg program =
     | If (b, com1, com2) -> 
         let blocks1, edges1 = process_com com1 in
         let blocks2, edges2 = process_com com2 in
-        let decision_block = create_block (If (b, com1, com2)) in
+        let decision_block = create_block (BQuestion b) in
         let final_block = create_block Skip in
         let edges = edges1 @ edges2 @ [
           ControlFlow (decision_block, List.hd blocks1); (* From decision block to true branch *)
@@ -62,7 +65,7 @@ let generate_cfg program =
         let body_blocks, body_edges = process_com com in
 
         (* Create a node for the loop condition *)
-        let condition_block = create_block (While (b, com)) in
+        let condition_block = create_block (BQuestion b) in
 
         (* Create a node for the exit block *)
         let exit_block = create_block Skip in

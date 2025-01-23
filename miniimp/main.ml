@@ -21,6 +21,7 @@ let rec string_of_com (com: Ast.com) : string =
   match com with
   | Ast.Skip -> "skip"
   | Ast.Assign (v, a) -> v ^ " := " ^ string_of_aexp a
+  | Ast.BQuestion b -> string_of_bexp b ^ "?"
   | Ast.Seq (c1, c2) -> string_of_com c1 ^ " ; " ^ string_of_com c2
   | Ast.If (b, c1, c2) -> "if " ^ string_of_bexp b ^ " then " ^ string_of_com c1 ^ " else " ^ string_of_com c2
   | Ast.While (b, c) -> "while " ^ string_of_bexp b ^ " do " ^ string_of_com c
@@ -31,6 +32,7 @@ let string_of_com com =
   match com with
   | Skip -> "skip"
   | Assign (v, a) -> v ^ " := " ^ string_of_aexp a
+  | BQuestion b -> string_of_bexp b  ^ "?"
   | Seq (c1, c2) -> string_of_com c1 ^ " ; " ^ string_of_com c2
   | If (b, c1, c2) -> "if " ^ string_of_bexp b ^ " then " ^ string_of_com c1 ^ " else " ^ string_of_com c2
   | While (b, c) -> "while " ^ string_of_bexp b ^ " do " ^ string_of_com c
