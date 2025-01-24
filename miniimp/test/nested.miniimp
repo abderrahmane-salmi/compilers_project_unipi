@@ -1,0 +1,15 @@
+def main with input in output out as
+  x := in;
+  out := 0;
+  while not x < 0 do (
+    out := out + x;
+    x := x - 1;
+    out := out - x;
+    if in < 5 then(
+      out := out * 2 - 1 + 2;
+      out := out * 2
+    ) else
+      out := out * 3;
+      out := out + 3
+  );
+  skip
