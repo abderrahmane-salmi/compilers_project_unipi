@@ -3,7 +3,7 @@ open Astutil
 
 (* ************************* CFG Data Structure ************************* *)
 
-(* Type for nodes in the CFG -- each node has an id and a code (com) *)
+(* Type for nodes in the CFG -- each node has an id and a code (a list of commands) *)
 type node =
   | BasicBlock of int * com list
 
@@ -42,24 +42,34 @@ let create_block code =
 
 (* ************************* CFG Generation ************************* *)
 
-(* Helper function to combine blocks into a maximal block *)
+(* Helper function to group simple statements (skip and assign) into a maximal block.
+it returns a tuple (list, com) where:
+- list: a list of grouped simple commands, which we'll create a block for them later
+- com: the remaining control command that can't be grouped.
+PS: com == skip if all commands are simple and they got grouped together. *)
 let rec group_simple_blocks com =
   match com with
+  (* Add the Skip com to the grouped block and continue processing the rest *)
   | Seq (Skip, rest) -> 
     let grouped_rest, remaining = group_simple_blocks rest in
     (Skip :: grouped_rest, remaining)
+  (* Add the assignment com to the grouped block and continue processing the rest *)
   | Seq (Assign (v, a), rest) ->
-    Printf.printf "Grouping: %s\n" (string_of_com (Assign (v, a)));
-      let grouped_rest, remaining = group_simple_blocks rest in
-      Printf.printf "Grouped: %s\n" (string_of_com (Assign (v, a)));
-      (Assign (v, a) :: grouped_rest, remaining)
-  | Seq (Seq (c1, c2), rest) -> group_simple_blocks (Seq (c1, Seq (c2, rest))) (* Flatten nested Seqs *)
+    let grouped_rest, remaining = group_simple_blocks rest in
+    (Assign (v, a) :: grouped_rest, remaining)
+  (* Flatten nested sequences to simplify grouping *)
+  | Seq (Seq (c1, c2), rest) -> group_simple_blocks (Seq (c1, Seq (c2, rest)))
+  
+  (* STOP CASES: Stop grouping if the sequence starts with a control statement (`BQuestion`, `If`, or `While`) *)
   | Seq (BQuestion b, rest) -> ([], Seq (BQuestion b, rest)) (* this case will never happen since user won't input b? *)
-  | Seq (If (b, c1, c2), rest) -> ([], Seq (If (b, c1, c2), rest)) (* Stop grouping if it's a complex statement *)
-  | Seq (While (b, c), rest) -> ([], Seq (While (b, c), rest)) (* Stop grouping if it's a complex statement *)
-  | Skip | Assign _ -> ([com], Skip)     (* Return as part of the current block *)
+  | Seq (If (b, c1, c2), rest) -> ([], Seq (If (b, c1, c2), rest))
+  | Seq (While (b, c), rest) -> ([], Seq (While (b, c), rest))
   | BQuestion _ | If _ | While _ -> ([], com) (* Stop grouping for control-flow statements *)
 
+  (* BASE CASES: Return the command as part of a block if it's a simple statement *)
+  | Skip | Assign _ -> ([com], Skip)
+
+  
 (* Recursively generate the CFG from the MiniImp program (command) *)
 let generate_cfg program =
   let rec process_com com =
@@ -74,7 +84,10 @@ let generate_cfg program =
     | BQuestion b ->
         let block = create_block [(BQuestion b)] in
         ([block], [])
+
+    (* Sequence of commands *)
     | Seq (If (b, c1, c2), rest) ->
+      (* if seq starts with an if, it means we can't merge the two coms into 1 block, so proccess them separatly and add an edge between them *)
       let blocks1, edges1 = process_com (If (b, c1, c2)) in
       let blocks2, edges2 = process_com rest in
       let edges = edges1 @ edges2 @ [
@@ -82,6 +95,7 @@ let generate_cfg program =
       ] in
       (blocks1 @ blocks2, edges)
     | Seq (While (b, c), rest) ->
+      (* if seq starts with a while, it means we can't merge the two coms into 1 block, so proccess them separatly and add an edge between them *)
       let blocks1, edges1 = process_com (While (b, c)) in
       let blocks2, edges2 = process_com rest in
       let edges = edges1 @ edges2 @ [
@@ -89,24 +103,28 @@ let generate_cfg program =
       ] in
       (blocks1 @ blocks2, edges)
     | Seq (c1, c2) -> 
+      (* if the seq doesn't contain a control statement (at least in com1), try to group simple statements into one block *)
       let grouped, remaining = group_simple_blocks (Seq (c1, c2)) in
 
-      (* print grouped (which is a list of com) and remaining content (which is a com) *)
-      Printf.printf "Grouped: ";
-      List.iter (fun com -> Printf.printf "%s; " (string_of_com com)) grouped;
-      Printf.printf "\nRemaining: %s\n" (string_of_com remaining);
-
-
+      (* create a block for the simple grouped statements *)
       let block = create_block grouped in
+      
       (* process_com remaining only if remaining is not empty *)
       if remaining = Skip then
         ([block], [])
       else
+        (* process the remaining coms, which based on our logic are control statements *)
         let remaining_blocks, remaining_edges = process_com remaining in
+        
+        (* Add an edge from the block of the grouped simple statements to the first block of the remaining statements *)
         let edges = remaining_edges @ [
-        ControlFlow (block, List.hd remaining_blocks) (* From last block of com1 to first block of com2 *)
+          ControlFlow (block, List.hd remaining_blocks)
         ] in
+
+        (* Return the generated nodes and edges *)
         (block :: remaining_blocks, edges)
+
+    (* Control Flow Statements *)
     | If (b, com1, com2) -> 
         (* Process and get the blocks and edges of the true and false branches *)
         let blocks1, edges1 = process_com com1 in
@@ -164,7 +182,7 @@ let generate_cfg program =
     exit = exit_block;
   }
 
-(* ************************* DEBUG ************************* *)
+(* ************************* PRINT ************************* *)
 
 (* Function to print the CFG for debugging *)
 let print_cfg cfg =
