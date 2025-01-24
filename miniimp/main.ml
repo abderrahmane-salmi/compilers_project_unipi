@@ -37,27 +37,7 @@ let () =
   let cfg = generate_cfg com in
 
   (* Print the CFG - Nodes and Edges *)
-  Printf.printf "Control Flow Graph (CFG):\n";
-
-  (* print_cfg cfg; *)
-
-  (* Print the nodes with their code *)
-  Printf.printf "Nodes:\n";
-  List.iter (fun node ->
-    match node with
-    | BasicBlock (id, commands) -> 
-      Printf.printf "Node %d: " id;
-      List.iter (fun com -> Printf.printf "%s\t " (Astutil.string_of_com com)) commands;
-      print_newline ()
-  ) cfg.nodes;
-
-  (* Print the edges *)
-  Printf.printf "Edges:\n";
-  List.iter (fun edge ->
-    match edge with
-    | ControlFlow (BasicBlock (id1, _), BasicBlock (id2, _)) ->
-        Printf.printf "Edge from Node %d to Node %d\n" id1 id2
-  ) cfg.edges;
+  print_cfg cfg;
 
   (* Evaluate the program with the provided input value *)
   let result_env = eval_prg initial_env program input_value in
