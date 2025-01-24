@@ -39,12 +39,16 @@ let () =
   (* Print the CFG - Nodes and Edges *)
   Printf.printf "Control Flow Graph (CFG):\n";
 
+  (* print_cfg cfg; *)
+
   (* Print the nodes with their code *)
   Printf.printf "Nodes:\n";
   List.iter (fun node ->
     match node with
-    | BasicBlock (id, code) -> 
-        Printf.printf "Node %d: %s\n" id (Astutil.string_of_com code)
+    | BasicBlock (id, commands) -> 
+      Printf.printf "Node %d: " id;
+      List.iter (fun com -> Printf.printf "%s\t " (Astutil.string_of_com com)) commands;
+      print_newline ()
   ) cfg.nodes;
 
   (* Print the edges *)
