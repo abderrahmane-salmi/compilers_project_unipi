@@ -1,5 +1,6 @@
 open Semantics
 open Cfg
+open Minirisc
 
 (* Main function to read program, generate CFG, and evaluate it *)
 let () =
@@ -38,6 +39,12 @@ let () =
 
   (* Print the CFG - Nodes and Edges *)
   Cfg.print_cfg cfg;
+
+  let minirisc_cfg = Minirisccfg.translate_cfg cfg in
+
+  (* Print the translated MiniRISC CFG *)
+  let str = MiniRISC.string_of_program minirisc_cfg in
+  Printf.printf "\nTranslated MiniRISC CFG:\n%s\n" str;
 
   (* Evaluate the program with the provided input value *)
   let result_env = eval_prg initial_env program input_value in
