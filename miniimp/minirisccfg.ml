@@ -6,9 +6,13 @@ open Ast
 
 (* ************************* MiniImp CFG to MiniRISC CFG ************************* *)
 
-(* Mapping for registers *)
-let reg_counter = ref 0
-let var_to_reg = Hashtbl.create 10  (* Map MiniImp variables to MiniRISC registers *)
+(* Registers Storing *)
+
+let r_in = 0  (* Reserved for input var *)
+let r_out = 1 (* Reserved for output var *)
+
+let reg_counter = ref 2
+let regs_list = Hashtbl.create 10
 
 (* Allocate a new register *)
 let new_reg () =
@@ -16,14 +20,18 @@ let new_reg () =
   reg_counter := !reg_counter + 1;
   r
 
-(* Get the register for a variable, allocating a new one if needed *)
+(* Get the register for a variable if it exists already, otherwise allocate a new one *)
 let get_register var =
-  if Hashtbl.mem var_to_reg var then
-    Hashtbl.find var_to_reg var
-  else
-    let r = new_reg () in
-    Hashtbl.add var_to_reg var r;
-    r
+  match var with
+  | "in" -> r_in
+  | "out" -> r_out
+  | _ ->
+      if Hashtbl.mem regs_list var then
+        Hashtbl.find regs_list var
+      else
+        let r = new_reg () in
+        Hashtbl.add regs_list var r;
+        r
 
 (* Translate an arithmetic expression (aexp) to MiniRISC commands *)
 let rec translate_aexp aexp =
