@@ -34,6 +34,7 @@ let get_register var =
         r
 
 (* Translate an arithmetic expression (aexp) to MiniRISC commands *)
+(* TODO: handle when one operand is an int, in that case use addi instead of add for example *)
 let rec translate_aexp aexp =
   match aexp with
   | Num n ->
@@ -96,14 +97,14 @@ let translate_com com =
 (* Translate a MiniImp block to a MiniRISC block *)
 let translate_block (BasicBlock (id, commands)) =
   let label = Printf.sprintf "L%d" id in
-  let rec translate_commands commands acc =
+  let rec translate_commands commands =
     match commands with
-    | [] -> List.rev acc
+    | [] -> []
     | com :: rest ->
         let translated = translate_com com in
-        translate_commands rest (translated @ acc)
+        translated @ translate_commands rest (* Maintain order by appending translated commands *)
   in
-  let translated_commands = translate_commands commands [] in
+  let translated_commands = translate_commands commands in
   { label; coms = translated_commands }
 
 (* Translate a MiniImp CFG to a MiniRISC CFG *)
