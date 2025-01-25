@@ -20,9 +20,6 @@ module MiniRISC = struct
     | Load of int * int (* load r1 => r2 -> Load a value from memory address stored in r1 into a register r2: r2 := M[r1] *)
     | LoadI of int * int (* loadI n => r -> Load an immediate value n into a register r: r := n *)
     | Store of int * int (* store r1 => r2 -> Store the value of register r1 into the memory address saved in register r2: M[r2] := r1 *)
-
-  (* Jumps and conditional jumps *)
-  type jump =
     | Jump of string  (* jump to label l *)
     | CJump of int * string * string (* cjump r l l' -> if the value in r is zero, jump to label l'; otherwise, jump to the label l *)
 
@@ -82,8 +79,6 @@ module MiniRISC = struct
       "loadI " ^ string_of_int n ^ " => r" ^ string_of_int r
     | Store (r1, r2) -> 
       "store r" ^ string_of_int r1 ^ " => r" ^ string_of_int r2
-  
-  let string_of_jump = function
     | Jump l -> "jump " ^ l
     | CJump (r, l1, l2) -> "cjump r" ^ string_of_int r ^ " " ^ l1 ^ " " ^ l2
 

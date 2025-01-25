@@ -43,8 +43,15 @@ let () =
   let minirisc_cfg = Minirisccfg.translate_cfg cfg in
 
   (* Print the translated MiniRISC CFG *)
-  let str = MiniRISC.string_of_program minirisc_cfg in
-  Printf.printf "\nTranslated MiniRISC CFG:\n%s\n" str;
+  let minirisc_cfg_str = MiniRISC.string_of_program minirisc_cfg in
+  Printf.printf "\nTranslated MiniRISC CFG:\n%s\n" minirisc_cfg_str;
+
+  (* Translate MiniRISC CFG to MiniRISC Code *)
+  let minirisc_program = Minirisc_code.translate_cfg_to_program minirisc_cfg in
+
+  (* Print the translated MiniRISC program *)
+  let minirisc_program_str = MiniRISC.string_of_program minirisc_program in
+  Printf.printf "\nTranslated MiniRISC Program:\n%s\n" minirisc_program_str;
 
   (* Evaluate the program with the provided input value *)
   let result_env = eval_prg initial_env program input_value in
