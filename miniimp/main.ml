@@ -34,10 +34,10 @@ let () =
   let Main(_, _, com) = program in
 
   (* Generate the Control Flow Graph (CFG) for the program (i.e. its com) *)
-  let cfg = generate_cfg com in
+  let cfg = Cfg.generate_cfg com in
 
   (* Print the CFG - Nodes and Edges *)
-  print_cfg cfg;
+  Cfg.print_cfg cfg;
 
   (* Evaluate the program with the provided input value *)
   let result_env = eval_prg initial_env program input_value in
