@@ -34,7 +34,6 @@ let get_register var =
         r
 
 (* Translate an arithmetic expression (aexp) to MiniRISC commands *)
-(* TODO: handle when one operand is an int, in that case use addi instead of add for example *)
 let rec translate_aexp aexp =
   match aexp with
   | Num n ->
@@ -43,6 +42,18 @@ let rec translate_aexp aexp =
   | Var v ->
       let r = get_register v in
       [], r
+  | Plus (a1, Num n) | Plus (Num n, a1) ->
+      let cmds1, r1 = translate_aexp a1 in
+      let r = new_reg () in
+      cmds1 @ [Biop (AddI, r1, n, r)], r
+  | Minus (a1, Num n) ->
+      let cmds1, r1 = translate_aexp a1 in
+      let r = new_reg () in
+      cmds1 @ [Biop (SubI, r1, n, r)], r
+  | Times (a1, Num n) | Times (Num n, a1) ->
+      let cmds1, r1 = translate_aexp a1 in
+      let r = new_reg () in
+      cmds1 @ [Biop (MultI, r1, n, r)], r
   | Plus (a1, a2) ->
       let cmds1, r1 = translate_aexp a1 in
       let cmds2, r2 = translate_aexp a2 in
@@ -65,6 +76,11 @@ let rec translate_bexp bexp =
   | Bool b ->
       let r = new_reg () in
       [LoadI ((if b then 1 else 0), r)], r
+  | And (b1, Bool true) | And (Bool true, b1) ->
+      translate_bexp b1
+  | And (_, Bool false) | And (Bool false, _) ->
+      let r = new_reg () in
+      [LoadI (0, r)], r
   | And (b1, b2) ->
       let cmds1, r1 = translate_bexp b1 in
       let cmds2, r2 = translate_bexp b2 in
@@ -87,12 +103,12 @@ let translate_com com =
   | Assign (v, aexp) ->
       let cmds, r = translate_aexp aexp in
       let rv = get_register v in
-      cmds @ [Urop (Copy, r, rv)]
+      if rv = r then cmds
+      else cmds @ [Urop (Copy, r, rv)]
   | BQuestion b ->
       let cmds, _ = translate_bexp b in
       cmds
   | _ -> failwith "Unsupported command"
-  (* TODO: add BQuestion b? *)
 
 (* Translate a MiniImp block to a MiniRISC block *)
 let translate_block (BasicBlock (id, commands)) =
@@ -102,12 +118,11 @@ let translate_block (BasicBlock (id, commands)) =
     | [] -> []
     | com :: rest ->
         let translated = translate_com com in
-        translated @ translate_commands rest (* Maintain order by appending translated commands *)
+        translated @ translate_commands rest
   in
   let translated_commands = translate_commands commands in
   { label; coms = translated_commands }
 
-(* Translate a MiniImp CFG to a MiniRISC CFG *)
 (* Translate a MiniImp CFG to a MiniRISC CFG *)
 let translate_cfg { nodes; edges; entry; exit } =
   let translated_blocks = List.map translate_block nodes in
@@ -124,31 +139,3 @@ let translate_cfg { nodes; edges; entry; exit } =
     entry = entry_label;
     exit = exit_label;
   }
-
-(* ************************ PRINT************************** *)
-(* let print_block { label; coms } =
-  Printf.printf "%s:\n" label;
-  List.iter (fun com -> Printf.printf "  %s\n" (string_of_scomm com)) coms
-
-let print_program { blocks; edges; entry; exit } =
-  let print_node = function
-    | BasicBlock (id, commands) ->
-        Printf.printf "Node %d: " id;
-        List.iter (fun com -> Printf.printf "%s\t" (string_of_com com)) commands;
-        print_newline ()
-  in
-  let print_edge = function
-    | ControlFlow (BasicBlock (id1, _), BasicBlock (id2, _)) ->
-        Printf.printf "Edge from Node %d to Node %d\n" id1 id2
-  in
-  Printf.printf "Control Flow Graph (CFG):\nNodes:\n";
-  List.iter print_node cfg.nodes;
-  Printf.printf "Edges:\n";
-  List.iter print_edge cfg.edges
-
-
-  Printf.printf "entry: %s\nexit: %s\n" entry exit;
-  Printf.printf "blocks:\n";
-  List.iter (fun block -> print_block block; print_newline ()) blocks
-  Printf.printf "edges:\n";
-  List.iter (fun (l1, l2) -> Printf.printf "  %s -> %s\n" l1 l2) edges *)
