@@ -184,6 +184,20 @@ module Cfg = struct
       exit = exit_block;
     }
 
+
+
+  (* ************************* UTIL ************************* *)
+  (* Function to return the code (list of commands) for a given node id *)
+  let code (node_id: int) (cfg: cfg) : com list =
+    match List.find_opt (fun n ->
+      match n with
+      | BasicBlock (id, _) when id = node_id -> true
+      | _ -> false
+    ) cfg.nodes with
+    | Some (BasicBlock (_, c)) -> c  (* Return the commands for the matching node *)
+    | None -> []  (* Return an empty list if no node with that ID is found *)
+
+
   (* ************************* PRINT ************************* *)
 
   (* Function to print the CFG for debugging *)
