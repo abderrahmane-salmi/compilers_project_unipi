@@ -34,22 +34,19 @@ let () =
   (* Extract the command (com) from the program (Main) *)
   let Main(_, _, com) = program in
 
-  (* Generate the Control Flow Graph (CFG) for the program (i.e. its com) *)
+  (* Generate the Control Flow Graph (CFG) for the program (i.e. its com) and print it *)
   let cfg = Cfg.generate_cfg com in
-
-  (* Print the CFG - Nodes and Edges *)
   Cfg.print_cfg cfg;
 
+  (* Translate MiniImp CFG to MiniRISC CFG and print it *)
   let minirisc_cfg = Minirisccfg.translate_cfg cfg in
 
-  (* Print the translated MiniRISC CFG *)
   let minirisc_cfg_str = MiniRISC.string_of_program minirisc_cfg in
   Printf.printf "\nTranslated MiniRISC CFG:\n%s\n" minirisc_cfg_str;
 
   (* Translate MiniRISC CFG to MiniRISC Code *)
   let minirisc_program = Minirisc_code.translate_cfg_to_program minirisc_cfg in
 
-  (* Print the translated MiniRISC program *)
   let minirisc_program_str = MiniRISC.string_of_program minirisc_program in
   Printf.printf "\nTranslated MiniRISC Program:\n%s\n" minirisc_program_str;
 

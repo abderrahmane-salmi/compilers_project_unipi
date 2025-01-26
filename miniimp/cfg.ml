@@ -204,16 +204,22 @@ module Cfg = struct
   let print_cfg cfg =
     let print_node = function
       | BasicBlock (id, commands) ->
-          Printf.printf "Node %d: " id;
-          List.iter (fun com -> Printf.printf "%s\t" (string_of_com com)) commands;
+          Printf.printf "Node %d:\n" id;
+          List.iter (fun com -> Printf.printf "%s\n" (string_of_com com)) commands;
           print_newline ()
     in
     let print_edge = function
       | ControlFlow (BasicBlock (id1, _), BasicBlock (id2, _)) ->
-          Printf.printf "Edge from Node %d to Node %d\n" id1 id2
+          Printf.printf "Node %d -> Node %d\n" id1 id2
     in
-    Printf.printf "Control Flow Graph (CFG):\nNodes:\n";
+    Printf.printf "\nMiniImp Control Flow Graph (CFG):\n";
+    
+    Printf.printf "Entry: Node %d\n" (match cfg.entry with BasicBlock (id, _) -> id);
+    Printf.printf "Exit: Node %d\n" (match cfg.exit with BasicBlock (id, _) -> id);
+
+    Printf.printf "\nNodes:\n";
     List.iter print_node cfg.nodes;
+    
     Printf.printf "Edges:\n";
     List.iter print_edge cfg.edges
 
