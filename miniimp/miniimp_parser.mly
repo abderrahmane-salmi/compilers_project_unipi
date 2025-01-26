@@ -4,7 +4,8 @@
 
 %token <string> VAR
 %token <int> NUM
-%token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND TRUE FALSE ASSIGN SEMICOLON LPAREN RPAREN LESS PLUS MINUS TIMES EOF
+%token <bool> BOOL_VALUE
+%token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND ASSIGN SEMICOLON LPAREN RPAREN LESS PLUS MINUS TIMES EOF
 
 (* Precedence and Associativity Declarations *)
 %nonassoc ELSE
@@ -41,13 +42,11 @@ com:
 | WHILE b = bexp DO c = com { While(b, c) }
 | LPAREN c = com RPAREN { c }
 
-// TODO: HOW TO recogize bool values?
 bexp:
-  NOT bexp { Not($2) }
+ b = BOOL_VALUE { Bool(b) }  
+| NOT bexp { Not($2) }
 | bexp AND bexp { And($1, $3) }
 | aexp LESS aexp { Less($1, $3) }
-| TRUE { Bool(true) }
-| FALSE { Bool(false) }
 
 aexp:
   VAR { Var($1) }
