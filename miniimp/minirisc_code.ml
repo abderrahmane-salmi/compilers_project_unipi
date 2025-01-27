@@ -30,6 +30,9 @@ let translate_cfg_to_program cfg =
             if urop = Not then r
             else failwith ("Unsupported unary operation for condition: " ^ (string_of_urop urop))
           )
+          (* condition instruction can be an intermediate load in case of bool literals *)
+          | LoadI (_, r) :: _ -> r
+          (* condition instruction can be an intermediate load in case of num literals *)
           | _ -> failwith ("Cannot determine condition register in block: " ^ label)
         in
         [CJump (cond_register, l_true, l_false)]
