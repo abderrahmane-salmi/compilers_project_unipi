@@ -1,5 +1,5 @@
 def main with input in output out as
-  if true then (
+  if false then (
     out := 1
   )
   else
