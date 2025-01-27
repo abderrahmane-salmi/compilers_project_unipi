@@ -32,6 +32,7 @@ rule read = parse
   | "+" { PLUS }
   | "-" { MINUS }
   | "*" { TIMES }
+  | "true" { TRUE }
   | ident as id { VAR id }
   | digit as num { NUM (int_of_string num) }
   | bool as b { BOOL_VALUE (bool_of_string b)}

@@ -5,7 +5,7 @@
 %token <string> VAR
 %token <int> NUM
 %token <bool> BOOL_VALUE
-%token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND ASSIGN SEMICOLON LPAREN RPAREN LESS PLUS MINUS TIMES EOF
+%token DEF MAIN WITH INPUT OUTPUT AS SKIP IF THEN ELSE WHILE DO NOT AND ASSIGN SEMICOLON LPAREN RPAREN LESS PLUS MINUS TIMES EOF TRUE
 
 (* Precedence and Associativity Declarations *)
 %nonassoc ELSE
@@ -43,7 +43,7 @@ com:
 | LPAREN c = com RPAREN { c }
 
 bexp:
- b = BOOL_VALUE { Bool(b) }  
+| TRUE { Bool true }  
 | NOT bexp { Not($2) }
 | bexp AND bexp { And($1, $3) }
 | aexp LESS aexp { Less($1, $3) }
