@@ -52,8 +52,17 @@ let check_use_before_def (block : block) (in_set : RegisterSet.t) : unit =
   in
   check_instructions in_set block.coms
 
+(* Print the analysis state for debugging *)
+let print_analysis_state (state_tbl : (string, analysis_state) Hashtbl.t) : unit =
+  Printf.printf "\nDataflow Analysis State:\n";
+  Hashtbl.iter (fun label state ->
+    let in_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.in_set "" in
+    let out_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.out_set "" in
+    Printf.printf "Block %s:\n  in:  %s\n  out: %s\n" label in_set_str out_set_str
+  ) state_tbl
+
 (* Perform defined variables analysis using the greatest fixpoint *)
-let defined_variables_analysis (cfg : program) : unit =
+let defined_variables_analysis (cfg : program) (print : bool) : unit =
   let state_tbl = init_analysis_state cfg in
   let changed = ref true in
   while !changed do
@@ -92,6 +101,8 @@ let defined_variables_analysis (cfg : program) : unit =
       )
     ) cfg.blocks
   done;
+  (* Print the analysis state for debugging *)
+  if print then print_analysis_state state_tbl;
   (* Check for use-before-def errors *)
   List.iter (fun block ->
     let in_set = (Hashtbl.find state_tbl block.label).in_set in
