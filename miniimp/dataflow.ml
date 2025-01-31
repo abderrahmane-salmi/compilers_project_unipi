@@ -101,8 +101,10 @@ let defined_variables_analysis (cfg : program) (print : bool) : unit =
       )
     ) cfg.blocks
   done;
+  
   (* Print the analysis state for debugging *)
   if print then print_analysis_state state_tbl;
+  
   (* Check for use-before-def errors *)
   List.iter (fun block ->
     let in_set = (Hashtbl.find state_tbl block.label).in_set in
