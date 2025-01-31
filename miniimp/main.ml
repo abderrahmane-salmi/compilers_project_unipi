@@ -41,8 +41,13 @@ let () =
   (* Translate MiniImp CFG to MiniRISC CFG and print it *)
   let minirisc_cfg = Minirisccfg.translate_cfg cfg in
 
+  (
+  (* Perform Defined Variables Analysis *)
+  Dataflow.defined_variables_analysis minirisc_cfg;
+
   let minirisc_cfg_str = MiniRISC.string_of_program minirisc_cfg in
-  Printf.printf "\nTranslated MiniRISC CFG:\n%s\n" minirisc_cfg_str;
+  Printf.printf "\nTranslated MiniRISC CFG:\n%s\n" minirisc_cfg_str
+  );
 
   (* Translate MiniRISC CFG to MiniRISC Code *)
   let minirisc_program = Minirisc_code.translate_cfg_to_program minirisc_cfg in
