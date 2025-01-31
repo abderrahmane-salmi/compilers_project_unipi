@@ -54,7 +54,6 @@ let check_use_before_def (block : block) (in_set : RegisterSet.t) : unit =
 
 (* Print the analysis state for debugging *)
 let print_analysis_state (state_tbl : (string, analysis_state) Hashtbl.t) : unit =
-  Printf.printf "\nDataflow Analysis State:\n";
   Hashtbl.iter (fun label state ->
     let in_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.in_set "" in
     let out_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.out_set "" in
@@ -103,7 +102,10 @@ let defined_variables_analysis (cfg : program) (print : bool) : unit =
   done;
   
   (* Print the analysis state for debugging *)
-  if print then print_analysis_state state_tbl;
+  if print then (
+    Printf.printf "\nDefined Variables Analysis:\n";
+    print_analysis_state state_tbl
+  );
   
   (* Check for use-before-def errors *)
   List.iter (fun block ->

@@ -41,19 +41,18 @@ let () =
   (* Translate MiniImp CFG to MiniRISC CFG and print it *)
   let minirisc_cfg = Minirisccfg.translate_cfg cfg in
 
-  (
-  (* Perform Defined Variables Analysis *)
-  Dataflow.defined_variables_analysis minirisc_cfg true;
-
   let minirisc_cfg_str = MiniRISC.string_of_program minirisc_cfg in
-  Printf.printf "\nTranslated MiniRISC CFG:\n%s\n" minirisc_cfg_str
-  );
+  Printf.printf "\nTranslated MiniRISC CFG:\n%s\n" minirisc_cfg_str;
 
   (* Translate MiniRISC CFG to MiniRISC Code *)
   let minirisc_program = Minirisc_code.translate_cfg_to_program minirisc_cfg in
 
   let minirisc_program_str = MiniRISC.string_of_program minirisc_program in
   Printf.printf "\nTranslated MiniRISC Program:\n%s\n" minirisc_program_str;
+
+  (* Dataflow Analysis *)
+  (* Perform Defined Variables Analysis *)
+  Dataflow.defined_variables_analysis minirisc_cfg false;
 
   (* Evaluate the program with the provided input value *)
   let result_env = eval_prg initial_env program input_value in
@@ -62,6 +61,6 @@ let () =
   let output_value = 
     match lookup result_env "out" with
     | Some value -> value
-    | None -> failwith "Output variable not found in the environment"
+    | None -> failwith "\nOutput variable not found in the environment"
   in
-  Printf.printf "Output: %d\n" output_value
+  Printf.printf "\nOutput: %d\n" output_value
