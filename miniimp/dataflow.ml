@@ -1,30 +1,55 @@
 open Minirisc
 open MiniRISC
 
+(* Modules for working with sets of labels (strings) and registers (integers) *)
 module LabelSet = Set.Make(String)
 module RegisterSet = Set.Make(Int)
 
+(* Type representing the analysis state for a block *)
 type analysis_state = {
   in_set : RegisterSet.t;  (* Registers defined at block entry *)
   out_set : RegisterSet.t; (* Registers defined at block exit *)
 }
 
-(* Initialize the analysis state for all blocks *)
-let init_analysis_state (cfg : program) : (string, analysis_state) Hashtbl.t =
-  let tbl = Hashtbl.create (List.length cfg.blocks) in
-  List.iter (fun block ->
-    let initial_in = if block.label = cfg.entry then RegisterSet.singleton 0 (* r_in *)
-                     else RegisterSet.empty in
-    Hashtbl.add tbl block.label { in_set = initial_in; out_set = initial_in }
-  ) cfg.blocks;
-  tbl
 
-(* Check if a register is used before being defined *)
+
+(*
+  Initialize the analysis state for all blocks in the CFG.
+  The entry block starts with `r_in` (register 0) defined, while all other blocks start with empty 'in' and 'out' sets.
+  Input: The MiniRISC CFG.
+  Output: A hashtable mapping block labels to their initial analysis state.
+*)
+let init_analysis_state (cfg : program) : (string, analysis_state) Hashtbl.t =
+  (* Create a hashtable for analysis states for all blocks *)
+  let states = Hashtbl.create (List.length cfg.blocks) in
+  
+  List.iter (fun block ->
+    (* For each block, compute the 'in' set *)
+    let initial_in = if block.label = cfg.entry then
+      RegisterSet.singleton Minirisccfg.r_in (* r_in = 0 *)
+    else
+      RegisterSet.empty in
+    
+    (* Add the block's initial state to the states hashtable *)
+    Hashtbl.add states block.label { in_set = initial_in; out_set = initial_in }
+  ) cfg.blocks;
+  states
+
+
+
+(*
+  Check if a register is used before being defined in a block.
+    - Iterate through the instructions in the block.
+    - For each instruction, check if all used registers are defined.
+    - Update the set of defined registers as we processe each instruction.
+  Input: The block to check AND the set of registers defined at the entry of the block.
+  Output: Raises an exception if a register is used before being defined.
+*)
 let check_use_before_def (block : block) (in_set : RegisterSet.t) : unit =
   let rec check_instructions (current_defs : RegisterSet.t) = function
-    | [] -> ()
+    | [] -> () (* Base case: no more instructions to check *)
     | instr :: rest ->
-        (* Get used registers in the instruction *)
+        (* Get the registers used in the current instruction *)
         let used_regs = match instr with
           | Brop (_, r1, r2, _) -> [r1; r2]
           | Biop (_, r1, _, _) -> [r1]
@@ -33,58 +58,88 @@ let check_use_before_def (block : block) (in_set : RegisterSet.t) : unit =
           | CJump (r, _, _) -> [r]
           | _ -> []
         in
+        
         (* Check if all used registers are defined *)
         List.iter (fun r ->
           if not (RegisterSet.mem r current_defs) then
             failwith (Printf.sprintf "Register r%d used before definition in block %s" r block.label)
         ) used_regs;
+        
         (* Update current_defs with defined register *)
-        let defined_reg = match instr with
+        let new_defs = match instr with
+          (* These instructions define a register, so add it to the set *)
           | Brop (_, _, _, r) | Biop (_, _, _, r) | Urop (_, _, r)
-          | LoadI (_, r) | Load (_, r) | Store (_, r) -> Some r
-          | _ -> None
+          | LoadI (_, r) | Load (_, r) | Store (_, r) -> RegisterSet.add r current_defs
+          (* No new register is defined, return the current set *)
+          | _ -> current_defs
         in
-        let new_defs = match defined_reg with
-          | Some r -> RegisterSet.add r current_defs
-          | None -> current_defs
-        in
+
+        (* Recursively check the remaining instructions *)
         check_instructions new_defs rest
   in
+
+  (* Start checking instructions with the initial 'in_set' *)
   check_instructions in_set block.coms
 
-(* Print the analysis state for debugging *)
-let print_analysis_state (state_tbl : (string, analysis_state) Hashtbl.t) : unit =
+
+
+(*
+  Print the analysis state for debugging.
+  Iterates through the hashtable and print the in and out sets for each block.
+  Input: Hashtable mapping block labels to their analysis state.
+*)
+let print_analysis_state (states_tbl : (string, analysis_state) Hashtbl.t) : unit =
   Hashtbl.iter (fun label state ->
     let in_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.in_set "" in
     let out_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.out_set "" in
     Printf.printf "Block %s:\n  in:  %s\n  out: %s\n" label in_set_str out_set_str
-  ) state_tbl
+  ) states_tbl
 
-(* Perform defined variables analysis using the greatest fixpoint *)
+
+
+(*
+  Perform defined variables analysis:
+    - Compute the 'in' and 'out' sets for each block until a fixpoint is reached.
+    - Check for use-before-def errors in each block.
+  Input: The MiniRISC CFG.
+  Output: Raises an exception if a register is used before being defined.
+*)
 let defined_variables_analysis (cfg : program) (print : bool) : unit =
-  let state_tbl = init_analysis_state cfg in
+  (* Initialize the analysis state for all blocks *)
+  let states_tbl = init_analysis_state cfg in
+  
+  (* Bool to track if any state has changed *)
   let changed = ref true in
+  
+  (* Iterate until no further changes occur (fixpoint) *)
   while !changed do
     changed := false;
     List.iter (fun block ->
-      let current_state = Hashtbl.find state_tbl block.label in
-      (* Compute new_in as the intersection of all predecessors' out sets *)
+      (* Get the state for the current block from the states table *)
+      let current_block_state = Hashtbl.find states_tbl block.label in
+      
+      (* Compute 'new_curr_block_in_set' as the intersection of all predecessors 'out' sets *)
       let predecessors = List.filter (fun (_, l2) -> l2 = block.label) cfg.edges in
-      let new_in = match predecessors with
-        | [] -> current_state.in_set
+      let new_curr_block_in_set = match predecessors with
+        | [] -> current_block_state.in_set (* No predecessors: use the current in_set *)
         | _ ->
+            (* Compute the intersection of all predecessors' out sets *)
             List.fold_left (fun acc (l1, _) ->
-              let pred_state = Hashtbl.find state_tbl l1 in
-              if RegisterSet.is_empty acc then pred_state.out_set
-              else RegisterSet.inter acc pred_state.out_set
+              let pred_state = Hashtbl.find states_tbl l1 in
+              if RegisterSet.is_empty acc then
+                pred_state.out_set
+              else
+                RegisterSet.inter acc pred_state.out_set
             ) RegisterSet.empty predecessors
       in
-      (* Update in_set if changed *)
-      if not (RegisterSet.equal new_in current_state.in_set) then (
-        Hashtbl.replace state_tbl block.label { current_state with in_set = new_in };
+      
+      (* Update 'in_set' if changed *)
+      if not (RegisterSet.equal new_curr_block_in_set current_block_state.in_set) then (
+        Hashtbl.replace states_tbl block.label { current_block_state with in_set = new_curr_block_in_set };
         changed := true
       );
-      (* Compute new_out by processing instructions *)
+      
+      (* Compute new_curr_block_out_set by processing instructions in curr block *)
       let process_instruction defs instr =
         match instr with
         | Brop (_, _, _, r) | Biop (_, _, _, r) | Urop (_, _, r)
@@ -92,23 +147,24 @@ let defined_variables_analysis (cfg : program) (print : bool) : unit =
             RegisterSet.add r defs
         | _ -> defs
       in
-      let new_out = List.fold_left process_instruction new_in block.coms in
+      let new_curr_block_out_set = List.fold_left process_instruction new_curr_block_in_set block.coms in
+      
       (* Update out_set if changed *)
-      if not (RegisterSet.equal new_out current_state.out_set) then (
-        Hashtbl.replace state_tbl block.label { current_state with out_set = new_out };
+      if not (RegisterSet.equal new_curr_block_out_set current_block_state.out_set) then (
+        Hashtbl.replace states_tbl block.label { current_block_state with out_set = new_curr_block_out_set };
         changed := true
       )
     ) cfg.blocks
   done;
   
-  (* Print the analysis state for debugging *)
+  (* Print the analysis state for debugging (if needed) *)
   if print then (
     Printf.printf "\nDefined Variables Analysis:\n";
-    print_analysis_state state_tbl
+    print_analysis_state states_tbl
   );
   
-  (* Check for use-before-def errors *)
+  (* Check for use-before-def errors in each block *)
   List.iter (fun block ->
-    let in_set = (Hashtbl.find state_tbl block.label).in_set in
+    let in_set = (Hashtbl.find states_tbl block.label).in_set in
     check_use_before_def block in_set
   ) cfg.blocks
