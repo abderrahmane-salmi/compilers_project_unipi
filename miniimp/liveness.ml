@@ -88,14 +88,14 @@ let liveness_analysis (cfg : program) : (string, analysis_state) Hashtbl.t =
       (* Get the state for the current block from the states table *)
       let current_block_state = Hashtbl.find states_tbl block.label in
       
-      (* Compute new out set as the union of the in_sets of all successor_blocks *)
-      let successor_blocks = List.filter (fun (l1, _) -> l1 = block.label) cfg.edges in
+      (* Compute new out set *)
       let new_curr_block_out_set =  if block.label = cfg.exit then
         (* if block is final, use the register of the output 'r_out' because it's always used *)
         (* lucf (lvout(L)) = {out (register for the output)} if L is final *)
         RegisterSet.singleton Minirisccfg.r_out
       else
         (* otherwise: lucf (lvout(L)) = ⋃(L,L′)∈CFG edges dvin(L′) *)
+        let successor_blocks = List.filter (fun (l1, _) -> l1 = block.label) cfg.edges in
         List.fold_left (fun acc (_, l2) ->
           let succ_state = Hashtbl.find states_tbl l2 in
           RegisterSet.union acc succ_state.in_set
