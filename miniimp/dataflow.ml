@@ -24,11 +24,11 @@ let init_analysis_state (cfg : program) : (string, analysis_state) Hashtbl.t =
   let states = Hashtbl.create (List.length cfg.blocks) in
   
   List.iter (fun block ->
-    (* For each block, compute the 'in' set *)
+    (* For each block, compute the initial 'in' set *)
     let initial_in = if block.label = cfg.entry then
       RegisterSet.singleton Minirisccfg.r_in (* r_in = 0 *)
     else
-      RegisterSet.empty in
+      RegisterSet.empty in (* otherwise, init to an empty set *)
     
     (* Add the block's initial state to the states hashtable *)
     Hashtbl.add states block.label { in_set = initial_in; out_set = initial_in }

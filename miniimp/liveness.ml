@@ -1,15 +1,44 @@
 open Minirisc
 open MiniRISC
 
+(* ************************* DATA STRUCTIRES ************************* *)
+
 (* Modules for working with sets of labels (strings) and registers (integers) *)
-module LabelSet = Set.Make(String)
 module RegisterSet = Set.Make(Int)
 
 (* Type representing the analysis state for a block *)
 type analysis_state = {
-  in_set : RegisterSet.t;  (* Registers live at the entry of the block *)
-  out_set : RegisterSet.t; (* Registers live at the exit of the block *)
+  in_set : RegisterSet.t;  (* Registers live at the entry of the block, aka lvin *)
+  out_set : RegisterSet.t; (* Registers live at the exit of the block, aka lvout *)
 }
+
+
+
+(* ************************* HELPER FUNCTIONS ************************* *)
+
+(* Extract registers used in a MiniRISC instruction *)
+let used_registers (instr : scomm) : RegisterSet.t =
+  match instr with
+  | Brop (_, r1, r2, _) -> RegisterSet.of_list [r1; r2]
+  | Biop (_, r1, _, _) -> RegisterSet.singleton r1
+  | Urop (_, r1, _) -> RegisterSet.singleton r1
+  | Load (r1, _) -> RegisterSet.singleton r1
+  | Store (r1, _) -> RegisterSet.singleton r1
+  | CJump (r, _, _) -> RegisterSet.singleton r
+  | _ -> RegisterSet.empty
+
+(* Extract registers defined in a MiniRISC instruction *)
+let defined_registers (instr : scomm) : RegisterSet.t =
+  match instr with
+  (* These instructions define a register *)
+  | Brop (_, _, _, r) | Biop (_, _, _, r) | Urop (_, _, r)
+  | LoadI (_, r) | Load (_, r) -> RegisterSet.singleton r
+  (* Other instructions do not define a register *)
+  | _ -> RegisterSet.empty
+
+
+
+(* ************************* INITIALIZATION ************************* *)
 
 (*
   Initialize the analysis state for all blocks:
@@ -19,95 +48,87 @@ type analysis_state = {
   Output: A hashtable mapping block labels to their initial analysis state.
 *)
 let init_analysis_state (cfg : program) : (string, analysis_state) Hashtbl.t =
-  let tbl = Hashtbl.create (List.length cfg.blocks) in
+  (* Create a hashtable for analysis states for all blocks *)
+  let states = Hashtbl.create (List.length cfg.blocks) in
+
   List.iter (fun block ->
-    let initial_out = if block.label = cfg.exit then RegisterSet.singleton 1 (* r_out is always live *)
-                      else RegisterSet.empty in
-    Hashtbl.add tbl block.label { in_set = RegisterSet.empty; out_set = initial_out }
+    (* For each block, compute the initial 'out' set *)
+    let initial_out = if block.label = cfg.exit then
+      (* if block is final, use the register of the output 'r_out' because it's always used *)
+      RegisterSet.singleton Minirisccfg.r_out
+    else
+      (* otherwise, init to an empty set *)
+      RegisterSet.empty in
+
+    (* Add the block's initial state to the states hashtable *)
+    Hashtbl.add states block.label { in_set = RegisterSet.empty; out_set = initial_out }
   ) cfg.blocks;
-  tbl
+  states
+
+
+
+(* ************************* LIVENESS ANALYSIS ************************* *)
 
 (*
-  Process an instruction backward to update the liveness sets.
-  Input:
-    - instr: The instruction to process.
-    - live: The current set of live registers.
-  Output:
-    - The updated set of live registers.
-  Description:
-    - If the instruction uses a register, add it to the live set.
-    - If the instruction defines a register, remove it from the live set.
-*)
-let process_instruction (instr : scomm) (live : RegisterSet.t) : RegisterSet.t =
-  let used_regs = match instr with
-    | Brop (_, r1, r2, _) -> [r1; r2]
-    | Biop (_, r1, _, _) -> [r1]
-    | Urop (_, r1, _) -> [r1]
-    | Load (r1, _) -> [r1]
-    | CJump (r, _, _) -> [r]
-    | _ -> []
-  in
-  let defined_reg = match instr with
-    | Brop (_, _, _, r) | Biop (_, _, _, r) | Urop (_, _, r)
-    | LoadI (_, r) | Load (_, r) | Store (_, r) -> Some r (* These instructions define a register *)
-    | _ -> None (* Other instructions do not define a register *)
-  in
-  (* Add used registers to the live set *)
-  let live_with_used = List.fold_left (fun acc r -> RegisterSet.add r acc) live used_regs in
-  (* Remove defined registers from the live set *)
-  match defined_reg with
-  | Some r -> RegisterSet.remove r live_with_used
-  | None -> live_with_used
-
-(*
-  Perform liveness analysis on the CFG.
-  Input:
-    - cfg: The MiniRISC control flow graph (CFG).
-  Output:
-    - A hashtable mapping block labels to their final analysis state.
-  Description:
-    - Computes the `in` and `out` sets for each block until a fixpoint is reached.
+  Perform liveness analysis on the CFG by computing the in and out sets for each block until a fixpoint is reached.
+  Input: The MiniRISC control flow graph (CFG).
+  Output: Hashtable mapping block labels to their final analysis state.
 *)
 let liveness_analysis (cfg : program) : (string, analysis_state) Hashtbl.t =
-  let state_tbl = init_analysis_state cfg in
+  (* Initialize the analysis state for all blocks *)
+  let states_tbl = init_analysis_state cfg in
+  
+  (* Bool to track if any state has changed *)
   let changed = ref true in
+  
+  (* Iterate until no further changes occur (fixpoint) *)
   while !changed do
     changed := false;
     List.iter (fun block ->
-      let current_state = Hashtbl.find state_tbl block.label in
-      (* Compute new_out as the union of the in_sets of all successors *)
-      let successors = List.filter (fun (l1, _) -> l1 = block.label) cfg.edges in
-      let new_out = List.fold_left (fun acc (_, l2) ->
-        let succ_state = Hashtbl.find state_tbl l2 in
-        RegisterSet.union acc succ_state.in_set
-      ) RegisterSet.empty successors in
+      (* Get the state for the current block from the states table *)
+      let current_block_state = Hashtbl.find states_tbl block.label in
+      
+      (* Compute new out set as the union of the in_sets of all successor_blocks *)
+      (* lucf (lvout(L)) = ⋃(L,L′)∈CFG edges dvin(L′) *)
+      let successor_blocks = List.filter (fun (l1, _) -> l1 = block.label) cfg.edges in
+      let new_curr_block_out_set = 
+        List.fold_left (fun acc (_, l2) ->
+          let succ_state = Hashtbl.find states_tbl l2 in
+          RegisterSet.union acc succ_state.in_set
+        ) RegisterSet.empty successor_blocks in
+      
       (* Update out_set if changed *)
-      if not (RegisterSet.equal new_out current_state.out_set) then (
-        Hashtbl.replace state_tbl block.label { current_state with out_set = new_out };
+      if not (RegisterSet.equal new_curr_block_out_set current_block_state.out_set) then (
+        Hashtbl.replace states_tbl block.label { current_block_state with out_set = new_curr_block_out_set };
         changed := true
       );
-      (* Compute new_in by processing instructions backward *)
-      let new_in = List.fold_right process_instruction block.coms new_out in
+      
+      (* Compute new in set by processing instructions backward *)
+      (* lub(lvin(L)) = {r used in L} ∪ (lvout(L) \ {r defined in L}) *)
+      let new_curr_block_in_set = List.fold_right (fun instr live_after ->
+        let used_regs = used_registers instr in
+        let defined_regs = defined_registers instr in
+        let live_before = RegisterSet.union used_regs (RegisterSet.diff live_after defined_regs) in
+        live_before
+      ) block.coms new_curr_block_out_set in
+      
       (* Update in_set if changed *)
-      if not (RegisterSet.equal new_in current_state.in_set) then (
-        Hashtbl.replace state_tbl block.label { current_state with in_set = new_in };
+      if not (RegisterSet.equal new_curr_block_in_set current_block_state.in_set) then (
+        Hashtbl.replace states_tbl block.label { current_block_state with in_set = new_curr_block_in_set };
         changed := true
       )
     ) cfg.blocks
   done;
-  state_tbl
+  states_tbl
 
-(*
-  Print the liveness analysis state for debugging.
-  Input:
-    - state_tbl: A hashtable mapping block labels to their analysis state.
-  Output:
-    - Prints the `in` and `out` sets for each block.
-*)
-let print_liveness_state (state_tbl : (string, analysis_state) Hashtbl.t) : unit =
+
+
+(* ************************* PRINT ************************* *)
+
+let print_liveness_state (states_tbl : (string, analysis_state) Hashtbl.t) : unit =
   Printf.printf "\nLiveness Analysis State:\n";
   Hashtbl.iter (fun label state ->
     let in_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.in_set "" in
     let out_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.out_set "" in
     Printf.printf "Block %s:\n  in:  %s\n  out: %s\n" label in_set_str out_set_str
-  ) state_tbl
+  ) states_tbl
