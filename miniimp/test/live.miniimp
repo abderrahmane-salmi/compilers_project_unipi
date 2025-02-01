@@ -1,0 +1,9 @@
+def main with input in output out as
+  out := 4;
+  in := 2;
+  if in < out then (
+    z := out
+  ) else (
+    z := out * out
+  );
+  out := z

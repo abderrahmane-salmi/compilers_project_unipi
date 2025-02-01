@@ -54,6 +54,10 @@ let () =
   (* Perform Defined Variables Analysis *)
   Dataflow.defined_variables_analysis minirisc_cfg false;
 
+  (* Perform Liveness Analysis *)
+  let liveness_state = Liveness.liveness_analysis minirisc_cfg in
+  Liveness.print_liveness_state liveness_state;
+
   (* Evaluate the program with the provided input value *)
   let result_env = eval_prg initial_env program input_value in
 
