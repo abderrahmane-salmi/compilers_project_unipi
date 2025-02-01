@@ -1,8 +1,7 @@
 open Minirisc
 open MiniRISC
 
-(* Modules for working with sets of labels (strings) and registers (integers) *)
-module LabelSet = Set.Make(String)
+(* Module for working with sets of registers (integers) *)
 module RegisterSet = Set.Make(Int)
 
 (* Type representing the analysis state for a block *)
@@ -13,6 +12,7 @@ type analysis_state = {
 
 
 
+(* ************************* INITIALIZATION ************************* *)
 (*
   Initialize the analysis state for all blocks in the CFG.
   The entry block starts with `r_in` (register 0) defined, while all other blocks start with empty 'in' and 'out' sets.
@@ -85,20 +85,7 @@ let check_use_before_def (block : block) (in_set : RegisterSet.t) : unit =
 
 
 
-(*
-  Print the analysis state for debugging.
-  Iterates through the hashtable and print the in and out sets for each block.
-  Input: Hashtable mapping block labels to their analysis state.
-*)
-let print_analysis_state (states_tbl : (string, analysis_state) Hashtbl.t) : unit =
-  Hashtbl.iter (fun label state ->
-    let in_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.in_set "" in
-    let out_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.out_set "" in
-    Printf.printf "Block %s:\n  in:  %s\n  out: %s\n" label in_set_str out_set_str
-  ) states_tbl
-
-
-
+(* ************************* DEFINED VARIABLES ANALYSIS ************************* *)
 (*
   Perform defined variables analysis:
     - Compute the 'in' and 'out' sets for each block until a fixpoint is reached.
@@ -106,7 +93,7 @@ let print_analysis_state (states_tbl : (string, analysis_state) Hashtbl.t) : uni
   Input: The MiniRISC CFG.
   Output: Raises an exception if a register is used before being defined.
 *)
-let defined_variables_analysis (cfg : program) (print : bool) : unit =
+let defined_variables_analysis (cfg : program) : (string, analysis_state) Hashtbl.t =
   (* Initialize the analysis state for all blocks *)
   let states_tbl = init_analysis_state cfg in
   
@@ -164,15 +151,23 @@ let defined_variables_analysis (cfg : program) (print : bool) : unit =
       )
     ) cfg.blocks
   done;
-  
-  (* Print the analysis state for debugging (if needed) *)
-  if print then (
-    Printf.printf "\nDefined Variables Analysis:\n";
-    print_analysis_state states_tbl
-  );
-  
+
   (* Check for use-before-def errors in each block *)
   List.iter (fun block ->
     let in_set = (Hashtbl.find states_tbl block.label).in_set in
     check_use_before_def block in_set
-  ) cfg.blocks
+  ) cfg.blocks;
+
+  states_tbl
+  
+
+
+(* ************************* PRINT ************************* *)
+
+let print_defined_variables_analysis_state (states_tbl : (string, analysis_state) Hashtbl.t) : unit =
+  Printf.printf "\nDefined Variables Analysis State:\n";
+  Hashtbl.iter (fun label state ->
+    let in_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.in_set "" in
+    let out_set_str = RegisterSet.fold (fun r acc -> acc ^ "r" ^ string_of_int r ^ " ") state.out_set "" in
+    Printf.printf "Block %s:\n  in:  %s\n  out: %s\n" label in_set_str out_set_str
+  ) states_tbl

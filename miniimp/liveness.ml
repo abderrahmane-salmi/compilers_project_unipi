@@ -3,7 +3,7 @@ open MiniRISC
 
 (* ************************* DATA STRUCTIRES ************************* *)
 
-(* Modules for working with sets of labels (strings) and registers (integers) *)
+(* Module for working with sets of registers (integers) *)
 module RegisterSet = Set.Make(Int)
 
 (* Type representing the analysis state for a block *)

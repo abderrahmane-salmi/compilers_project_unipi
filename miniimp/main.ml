@@ -52,7 +52,8 @@ let () =
 
   (* Dataflow Analysis *)
   (* Perform Defined Variables Analysis *)
-  Dataflow.defined_variables_analysis minirisc_cfg false;
+  let defined_variables_analysis_state = Dataflow.defined_variables_analysis minirisc_cfg in
+  Dataflow.print_defined_variables_analysis_state defined_variables_analysis_state;
 
   (* Perform Liveness Analysis *)
   let liveness_state = Liveness.liveness_analysis minirisc_cfg in
