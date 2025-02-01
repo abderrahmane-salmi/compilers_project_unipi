@@ -31,7 +31,7 @@ let init_analysis_state (cfg : program) : (string, analysis_state) Hashtbl.t =
       RegisterSet.empty in (* otherwise, init to an empty set *)
     
     (* Add the block's initial state to the states hashtable *)
-    Hashtbl.add states block.label { in_set = initial_in; out_set = initial_in }
+    Hashtbl.add states block.label { in_set = initial_in; out_set = RegisterSet.empty }
   ) cfg.blocks;
   states
 
