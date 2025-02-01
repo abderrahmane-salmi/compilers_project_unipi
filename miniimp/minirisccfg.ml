@@ -40,11 +40,14 @@ let get_register var =
 (* ************************* TRANSLATION ************************* *)
 
 (* Translate an arithmetic expression (aexp) to MiniRISC commands *)
-let rec translate_aexp aexp =
+let rec translate_aexp ?(target=None) aexp =
   match aexp with
   | Num n ->
-      (* Load an immediate value into a new register *)
-      let r = new_reg () in
+      (* Load an immediate value into the target register if provided, otherwise allocate a new one *)
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       [LoadI (n, r)], r
   | Var v ->
       (* Return the register assigned to the variable *)
@@ -53,65 +56,98 @@ let rec translate_aexp aexp =
   | Plus (a1, Num n) | Plus (Num n, a1) ->
       (* Use AddI if one operand is an immediate value *)
       let cmds1, r1 = translate_aexp a1 in
-      let r = new_reg () in
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       cmds1 @ [Biop (AddI, r1, n, r)], r
   | Minus (a1, Num n) ->
       (* Use SubI if the second operand is an immediate value *)
       let cmds1, r1 = translate_aexp a1 in
-      let r = new_reg () in
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       cmds1 @ [Biop (SubI, r1, n, r)], r
   | Times (a1, Num n) | Times (Num n, a1) ->
       (* Use MultI if one operand is an immediate value *)
       let cmds1, r1 = translate_aexp a1 in
-      let r = new_reg () in
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       cmds1 @ [Biop (MultI, r1, n, r)], r
   (* Use Brop (add, sub, mult) for binary operations (+,-,x) between two registers *)
   | Plus (a1, a2) ->
       let cmds1, r1 = translate_aexp a1 in
       let cmds2, r2 = translate_aexp a2 in
-      let r = new_reg () in
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       cmds1 @ cmds2 @ [Brop (Add, r1, r2, r)], r
   | Minus (a1, a2) ->
       let cmds1, r1 = translate_aexp a1 in
       let cmds2, r2 = translate_aexp a2 in
-      let r = new_reg () in
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       cmds1 @ cmds2 @ [Brop (Sub, r1, r2, r)], r
   | Times (a1, a2) ->
       let cmds1, r1 = translate_aexp a1 in
       let cmds2, r2 = translate_aexp a2 in
-      let r = new_reg () in
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       cmds1 @ cmds2 @ [Brop (Mult, r1, r2, r)], r
 
 (* Translate a boolean expression (bexp) to MiniRISC commands *)
-let rec translate_bexp bexp =
+let rec translate_bexp ?(target=None) bexp =
   match bexp with
   | Bool b ->
-      (* Load 1 for true, 0 for false into a new register *)
-      let r = new_reg () in
+      (* Load 1 for true, 0 for false into the target register if provided, otherwise allocate a new one *)
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       [LoadI ((if b then 1 else 0), r)], r
   | And (b1, Bool true) | And (Bool true, b1) ->
       (* Simplify AND with true: return the first operand *)
-      translate_bexp b1
+      translate_bexp ~target:target b1
   | And (_, Bool false) | And (Bool false, _) ->
       (* Simplify AND with false: always load 0 *)
-      let r = new_reg () in
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       [LoadI (0, r)], r
   | And (b1, b2) ->
       (* Use Brop for AND between two registers *)
       let cmds1, r1 = translate_bexp b1 in
       let cmds2, r2 = translate_bexp b2 in
-      let r = new_reg () in
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       cmds1 @ cmds2 @ [Brop (And, r1, r2, r)], r
   | Not b ->
       (* Apply NOT operation using Urop *)
       let cmds, r1 = translate_bexp b in
-      let r = new_reg () in
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       cmds @ [Urop (Not, r1, r)], r
   | Less (a1, a2) ->
       (* Use Brop for Less-than operation *)
       let cmds1, r1 = translate_aexp a1 in
       let cmds2, r2 = translate_aexp a2 in
-      let r = new_reg () in
+      let r = match target with
+        | Some t -> t
+        | None -> new_reg ()
+      in
       cmds1 @ cmds2 @ [Brop (Less, r1, r2, r)], r
 
 (* Translate a MiniImp command (com) to MiniRISC commands *)
@@ -120,8 +156,8 @@ let translate_com com =
   | Skip -> [Nop] (* Translate Skip to Nop *)
   | Assign (v, aexp) ->
       (* Compute aexp and store the result in the variable's register *)
-      let cmds, r = translate_aexp aexp in
       let rv = get_register v in
+      let cmds, r = translate_aexp ~target:(Some rv) aexp in
       if rv = r then cmds (* Avoid redundant copy if result and target registers are the same *)
       else cmds @ [Urop (Copy, r, rv)]
   | BQuestion b ->
