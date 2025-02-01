@@ -4,5 +4,4 @@ def main with input in output out as
   while not x < 0 do (
     out := out + x;
     x := x - 1
-  );
-  skip
+  )
