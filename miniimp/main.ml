@@ -1,6 +1,7 @@
 open Semantics
 open Cfg
 open Minirisc
+open Defined_variables
 open Liveness
 
 (* Main function to read program, generate CFG, and evaluate it *)
@@ -53,8 +54,8 @@ let () =
 
   (* Dataflow Analysis *)
   (* Perform Defined Variables Analysis *)
-  let defined_variables_analysis_state = Dataflow.defined_variables_analysis minirisc_cfg in
-  Dataflow.print_defined_variables_analysis_state defined_variables_analysis_state;
+  let defined_variables_analysis_state = DefinedVariables.defined_variables_analysis minirisc_cfg in
+  DefinedVariables.print_defined_variables_analysis_state defined_variables_analysis_state;
 
   (* Perform Liveness Analysis *)
   let liveness_state = Liveness.liveness_analysis minirisc_cfg in

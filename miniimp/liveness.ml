@@ -1,6 +1,12 @@
 open Minirisc
 open MiniRISC
 
+(*
+  Liveness Analysis for the MiniRISC CFG.
+  The goal of this analysis is to determine which registers are live at each point in the program.
+  A register is live if its current value may be used in the future before being overwritten.
+  This analysis allows us to optimize register usage and avoid unnecessary allocations.
+*)
 module Liveness = struct
 
   (* ************************* DATA STRUCTIRES ************************* *)
