@@ -1,6 +1,7 @@
 open Semantics
 open Cfg
 open Minirisc
+open Liveness
 
 (* Main function to read program, generate CFG, and evaluate it *)
 let () =
