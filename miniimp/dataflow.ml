@@ -120,9 +120,15 @@ let defined_variables_analysis (cfg : program) (print : bool) : unit =
       (* Get the state for the current block from the states table *)
       let current_block_state = Hashtbl.find states_tbl block.label in
       
-      (* Compute 'new_curr_block_in_set' as the intersection of all predecessors 'out' sets *)
-      let predecessors = List.filter (fun (_, l2) -> l2 = block.label) cfg.edges in
-      let new_curr_block_in_set = match predecessors with
+      (* Compute 'new_curr_block_in_set' *)
+      let new_curr_block_in_set = if block.label = cfg.entry then
+        (* if block is initial, use the register of the output 'r_in' because it's always defined *)
+        (* lucf (dvin(L)) = {in (register for the input)} if L is initial *)
+        RegisterSet.singleton Minirisccfg.r_in
+      else
+        (* for other blocks: ⋂(L′,L)∈CFG edges dvout(L′) *)
+        let predecessors = List.filter (fun (_, l2) -> l2 = block.label) cfg.edges in
+        match predecessors with
         | [] -> current_block_state.in_set (* No predecessors: use the current in_set *)
         | _ ->
             (* Compute the intersection of all predecessors' out sets *)
