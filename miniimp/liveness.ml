@@ -112,8 +112,7 @@ let liveness_analysis (cfg : program) : (string, analysis_state) Hashtbl.t =
       let new_curr_block_in_set = List.fold_right (fun instr live_after ->
         let used_regs = used_registers instr in
         let defined_regs = defined_registers instr in
-        let live_before = RegisterSet.union used_regs (RegisterSet.diff live_after defined_regs) in
-        live_before
+        RegisterSet.union used_regs (RegisterSet.diff live_after defined_regs)
       ) block.coms new_curr_block_out_set in
       
       (* Update in_set if changed *)
