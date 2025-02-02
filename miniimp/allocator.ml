@@ -101,10 +101,11 @@ module RegisterAllocation = struct
         let r2_ = if Hashtbl.mem alloc_state.spill r2 then rB else r2 in
         load1 @ load2 @ [Brop (op, r1_, r2_, rB)] @ store
     | Biop (op, r1, n, r2) ->
-        let load = load_spilled r1 rA in
-        let store = store_spilled r2 rA rA in (* todo params *)
-        let r1_ = if Hashtbl.mem alloc_state.spill r1 then rA else r1 in
-        load @ [Biop (op, r1_, n, rA)] @ store
+        let load = load_spilled r1 rB in
+        let store = store_spilled r2 rB rA in
+        let r1_ = if Hashtbl.mem alloc_state.spill r1 then rB else r1 in
+        let r2_ = if Hashtbl.mem alloc_state.spill r2 then rB else r2 in
+        load @ [Biop (op, r1_, n, r2_)] @ store
     | Urop (op, r1, r2) ->
         let load = load_spilled r1 rB in
         let store = store_spilled r2 rB rA in
