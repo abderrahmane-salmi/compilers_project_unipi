@@ -26,7 +26,10 @@ module RegisterAllocation = struct
     List.iter (fun block ->
       List.iter (fun instr ->
         let used = used_registers instr in
-        RegisterSet.iter update_freq used
+        let defined = defined_registers instr in
+        (* get the union of defined and used registers (no duplicates tho) *)
+        let used_regs = RegisterSet.union used defined in
+        RegisterSet.iter update_freq used_regs
       ) block.coms
     ) cfg.blocks;
     freq_table
@@ -103,10 +106,10 @@ module RegisterAllocation = struct
         let r1_ = if Hashtbl.mem alloc_state.spill r1 then rA else r1 in
         load @ [Biop (op, r1_, n, rA)] @ store
     | Urop (op, r1, r2) ->
-        let load = load_spilled r1 rA in
-        let store = store_spilled r2 rA rA in (* todo params *)
-        let r1_ = if Hashtbl.mem alloc_state.spill r1 then rA else r1 in
-        let r2_ = if Hashtbl.mem alloc_state.spill r2 then rA else r2 in
+        let load = load_spilled r1 rB in
+        let store = store_spilled r2 rB rA in
+        let r1_ = if Hashtbl.mem alloc_state.spill r1 then rB else r1 in
+        let r2_ = if Hashtbl.mem alloc_state.spill r2 then rB else r2 in
         load @ [Urop (op, r1_, r2_)] @ store
     | LoadI (n, r) ->
       if Hashtbl.mem alloc_state.spill r then
