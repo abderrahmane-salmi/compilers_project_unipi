@@ -120,7 +120,8 @@ module RegisterAllocation = struct
         [instr]
     | CJump (r, l1, l2) ->
         let load = load_spilled r rA in
-        load @ [CJump (rA, l1, l2)]
+        let r_ = if Hashtbl.mem alloc_state.spill r then rA else r in
+        load @ [CJump (r_, l1, l2)]
     | _ -> [instr]
 
   (* Apply register allocation to an entire MiniRISC CFG *)
