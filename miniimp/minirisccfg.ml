@@ -19,7 +19,11 @@ let regs_list = Hashtbl.create 10 (* Map from variable name to register number *
 (* Allocate a new register *)
 let new_reg () =
   let r = !reg_counter in
-  reg_counter := !reg_counter + 1;
+  (* skip values 101 (rA) and 102 (rB) because they are special registers used as temp regs in allocation *)
+  if r = 101 || r = 102 then
+    (reg_counter := 103;)
+  else
+    (reg_counter := !reg_counter + 1);
   r
 
 (* Get the register for a variable if it exists already, otherwise allocate a new one *)
