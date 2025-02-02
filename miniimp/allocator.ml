@@ -77,10 +77,15 @@ module RegisterAllocation = struct
         [LoadI (addr, target); Load (target, target)]
       else []
     in
-    let store_spilled r source =
-      if Hashtbl.mem alloc_state.spill r then
-        let addr = Hashtbl.find alloc_state.spill r in
-        [LoadI (addr, source); Store (source, source)]
+    (*
+      spilled_r: register that is spilled
+      value_r: register that contains result value that we want to store in memory
+      mem_r: register that will contain memory address for spilled_r
+    *)
+    let store_spilled spilled_r value_r mem_r =
+      if Hashtbl.mem alloc_state.spill spilled_r then
+        let addr = Hashtbl.find alloc_state.spill spilled_r in
+        [LoadI (addr, mem_r); Store (value_r, mem_r)]
       else []
     in
 
@@ -88,18 +93,18 @@ module RegisterAllocation = struct
     | Brop (op, r1, r2, r3) ->
         let load1 = load_spilled r1 rA in
         let load2 = load_spilled r2 rB in
-        let store = store_spilled r3 rA in
+        let store = store_spilled r3 rB rA in
         let r1_ = if Hashtbl.mem alloc_state.spill r1 then rA else r1 in
         let r2_ = if Hashtbl.mem alloc_state.spill r2 then rB else r2 in
         load1 @ load2 @ [Brop (op, r1_, r2_, rB)] @ store
     | Biop (op, r1, n, r2) ->
         let load = load_spilled r1 rA in
-        let store = store_spilled r2 rA in
+        let store = store_spilled r2 rA rA in (* todo params *)
         let r1_ = if Hashtbl.mem alloc_state.spill r1 then rA else r1 in
         load @ [Biop (op, r1_, n, rA)] @ store
     | Urop (op, r1, r2) ->
         let load = load_spilled r1 rA in
-        let store = store_spilled r2 rA in
+        let store = store_spilled r2 rA rA in (* todo params *)
         let r1_ = if Hashtbl.mem alloc_state.spill r1 then rA else r1 in
         let r2_ = if Hashtbl.mem alloc_state.spill r2 then rA else r2 in
         load @ [Urop (op, r1_, r2_)] @ store
