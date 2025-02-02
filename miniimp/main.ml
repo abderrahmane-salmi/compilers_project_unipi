@@ -3,6 +3,8 @@ open Cfg
 open Minirisc
 open Defined_variables
 open Liveness
+(* open Target_code_generation *)
+open Allocator
 
 (* Main function to read program, generate CFG, and evaluate it *)
 let () =
@@ -61,7 +63,7 @@ let () =
   let liveness_state = Liveness.liveness_analysis minirisc_cfg in
   Liveness.print_liveness_state liveness_state;
 
-  let optimized_cfg = Minirisc_optimize.merge_registers minirisc_cfg liveness_state in
+  (* let optimized_cfg = Minirisc_optimize.merge_registers minirisc_cfg liveness_state in
   let reduced_cfg = Minirisc_code.reduce_registers minirisc_cfg 4 in (* Assume n=4 *)
   let reduced_minirisc_program = Minirisc_code.translate_cfg_to_program reduced_cfg in
   (
@@ -73,7 +75,20 @@ let () =
 
     let reduced_minirisc_program_str = MiniRISC.string_of_program reduced_minirisc_program in
     Printf.printf "\nReduced MiniRISC Program:\n%s\n" reduced_minirisc_program_str;
-  );
+  ); *)
+
+  (* Add this after liveness analysis in main.ml *)
+
+  (* Target Code Generation *)
+  (* let translated_program = TargetCodeGeneration.translate_cfg minirisc_program 4 in
+
+  let translated_program_str = MiniRISC.string_of_program translated_program in
+  Printf.printf "\nTranslated MiniRISC Program with %d Registers:\n%s\n" 4 translated_program_str; *)
+
+  (* Apply Register Allocation *)
+  let optimized_minirisc_cfg = RegisterAllocation.apply_register_allocation minirisc_cfg 5 in
+  let optimized_minirisc_cfg_str = MiniRISC.string_of_program optimized_minirisc_cfg in
+  Printf.printf "\nOptimized MiniRISC CFG with %d registers:\n%s\n" 5 optimized_minirisc_cfg_str;
 
   (* Evaluate the program with the provided input value *)
   let result_env = eval_prg initial_env program input_value in
