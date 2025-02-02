@@ -3,8 +3,7 @@ open Cfg
 open Minirisc
 open Defined_variables
 open Liveness
-(* open Target_code_generation *)
-open Allocator
+open Minirisc_allocator
 
 (* Main function to read program, generate CFG, and evaluate it *)
 let () =
@@ -86,7 +85,7 @@ let () =
   Printf.printf "\nTranslated MiniRISC Program with %d Registers:\n%s\n" 4 translated_program_str; *)
 
   (* Apply Register Allocation *)
-  let optimized_minirisc_cfg = RegisterAllocation.apply_register_allocation minirisc_cfg 5 in
+  let optimized_minirisc_cfg = MiniriscAllocator.apply_register_allocation minirisc_cfg 5 in
   let optimized_minirisc_cfg_str = MiniRISC.string_of_program optimized_minirisc_cfg in
   Printf.printf "\nOptimized MiniRISC CFG with %d registers:\n%s\n" 5 optimized_minirisc_cfg_str;
 
