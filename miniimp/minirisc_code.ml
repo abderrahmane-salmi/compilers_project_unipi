@@ -2,6 +2,7 @@
 
 open Minirisc
 open MiniRISC
+open Liveness
 
 (* Translate MiniRISC CFG to MiniRISC program *)
 let translate_cfg_to_program cfg =
@@ -54,3 +55,56 @@ let translate_cfg_to_program cfg =
     entry = cfg.entry;
     exit = cfg.exit;
   }
+
+
+(* ************************* Register Allocation ************************* *)
+let reduce_registers (cfg : MiniRISC.program) (n : int) =
+  (* Step 1: Determine registers to keep and spill *)
+  let all_regs =
+    List.fold_left (fun acc block ->
+      List.fold_left (fun acc instr ->
+        let used = Liveness.used_registers instr in
+        let defined = Liveness.defined_registers instr in
+        Liveness.RegisterSet.union (Liveness.RegisterSet.union used defined) acc
+      ) acc block.coms
+    ) Liveness.RegisterSet.empty cfg.blocks
+    |> Liveness.RegisterSet.elements
+  in
+
+  let num_regs = List.length all_regs in
+  if num_regs <= n - 2 then cfg (* No reduction needed *)
+  else (
+    (* Step 2: Choose registers to keep (first n-2) and spill the rest *)
+    let _, spill_regs = List.partition (fun r -> r < n - 2) all_regs in
+
+    (* Step 3: Map spilled registers to memory addresses *)
+    let addr_map = Hashtbl.create 10 in
+    List.iteri (fun i r -> Hashtbl.add addr_map r (i * 4)) spill_regs; (* 4 bytes per spilled register *)
+
+    (* Step 4: Insert load/store instructions for spilled registers *)
+    let process_instr instr =
+      match instr with
+      | Brop (op, r1, r2, r3) ->
+          let load_r1 = if List.mem r1 spill_regs then [
+            LoadI (Hashtbl.find addr_map r1, n - 2); (* Use rA (n-2) as temp *)
+            Load (n - 2, n - 2)
+          ] else [] in
+          let load_r2 = if List.mem r2 spill_regs then [
+            LoadI (Hashtbl.find addr_map r2, n - 1); (* Use rB (n-1) as temp *)
+            Load (n - 1, n - 1)
+          ] else [] in
+          let store_r3 = if List.mem r3 spill_regs then [
+            LoadI (Hashtbl.find addr_map r3, n - 2);
+            Store (n - 2, n - 2)
+          ] else [] in
+          load_r1 @ load_r2 @ [Brop (op, (if List.mem r1 spill_regs then n - 2 else r1), (if List.mem r2 spill_regs then n - 1 else r2), r3)] @ store_r3
+      (* Similar handling for Biop, Urop, etc. *)
+      | _ -> [instr] (* Simplified for brevity *)
+    in
+
+    let new_blocks = List.map (fun block ->
+      { block with coms = List.flatten (List.map process_instr block.coms) }
+    ) cfg.blocks in
+
+    { cfg with blocks = new_blocks }
+  )

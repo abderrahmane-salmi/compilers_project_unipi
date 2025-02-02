@@ -61,6 +61,20 @@ let () =
   let liveness_state = Liveness.liveness_analysis minirisc_cfg in
   Liveness.print_liveness_state liveness_state;
 
+  let optimized_cfg = Minirisc_optimize.merge_registers minirisc_cfg liveness_state in
+  let reduced_cfg = Minirisc_code.reduce_registers minirisc_cfg 4 in (* Assume n=4 *)
+  let reduced_minirisc_program = Minirisc_code.translate_cfg_to_program reduced_cfg in
+  (
+    let optimized_cfg_str = MiniRISC.string_of_program optimized_cfg in
+    Printf.printf "\nOptimized MiniRISC CFG:\n%s\n" optimized_cfg_str;
+
+    let reduced_cfg_str = MiniRISC.string_of_program reduced_cfg in
+    Printf.printf "\nReduced MiniRISC CFG:\n%s\n" reduced_cfg_str;
+
+    let reduced_minirisc_program_str = MiniRISC.string_of_program reduced_minirisc_program in
+    Printf.printf "\nReduced MiniRISC Program:\n%s\n" reduced_minirisc_program_str;
+  );
+
   (* Evaluate the program with the provided input value *)
   let result_env = eval_prg initial_env program input_value in
 
