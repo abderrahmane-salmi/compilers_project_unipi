@@ -129,6 +129,7 @@ module RegisterAllocation = struct
     let alloc_state = allocate_registers cfg n in
 
     (* print keep and spell sets for debuging *)
+    Printf.printf "\nAllocation state:\n";
     print_endline "Keep set:";
     RegisterSet.iter (fun r -> print_int r; print_string " ") alloc_state.keep;
     print_endline "";
