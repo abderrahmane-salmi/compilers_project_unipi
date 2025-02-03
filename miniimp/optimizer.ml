@@ -8,9 +8,8 @@ module Optimizer = struct
   module RegisterSet = Set.Make(Int)
   module StringSet = Set.Make(String)
 
-  (* A reg_mapping from an original register (int) to a new merged register (int) *)
-  type reg_reg_mapping = (int, int) Hashtbl.t
-
+  (* A mapping from an original register (int) to a new merged register (int) *)
+  type reg_mapping = (int, int) Hashtbl.t
 
 
   (* Compute the live ranges for each register *)
@@ -33,23 +32,20 @@ module Optimizer = struct
     (* Return the computed live ranges *)
     ranges
 
-  (* Check if two registers can be merged (their live ranges do not overlap) *)
-  let can_merge (live_ranges : (int, StringSet.t) Hashtbl.t) (r1 : int) (r2 : int) : bool =
-    let range1 = Hashtbl.find live_ranges r1 in
-    let range2 = Hashtbl.find live_ranges r2 in
-    StringSet.is_empty (StringSet.inter range1 range2)
 
   (*
-    Merge registers that have disjoint live ranges.
+    Merge registers that have do not have overlapping live ranges.
     We use a greedy algorithm: iterate over all registers and try to assign them to an already
     created merged register if their live range does not overlap.
     Special registers (r_in and r_out) are not merged.
-    Input: A hashtable reg_mapping registers to live range (set of block labels).
-    Output: A reg_mapping from original registers to new merged registers.
+    Input: A hashtable mapping registers to live range (set of block labels).
+    Output: A mapping from original registers to new merged registers.
   *)
-  let merge_registers (ranges : (int, StringSet.t) Hashtbl.t) : reg_reg_mapping =
+  let merge_registers (live_ranges : (int, StringSet.t) Hashtbl.t) : reg_mapping =
+    (* Create a mapping from original registers to merged registers *)
     let reg_mapping = Hashtbl.create 10 in
-    (* We will maintain a list of groups; each group is (merged_reg, live_range set) *)
+    
+    (* We will maintain a list of groups, each group is (merged_reg, live_range set) *)
     let groups = ref [] in
 
     (* Function to check if two live ranges overlap *)
@@ -57,7 +53,7 @@ module Optimizer = struct
       not (StringSet.is_empty (StringSet.inter r1_set r2_set))
     in
 
-    (* Process each register from the ranges table *)
+    (* Process each register from the live ranges table *)
     Hashtbl.iter (fun reg live_range ->
       (* Do not merge special registers *)
       if reg = Minirisccfg.r_in || reg = Minirisccfg.r_out then
@@ -81,12 +77,12 @@ module Optimizer = struct
             let new_range = StringSet.union group_range live_range in
             groups := (merged_reg, new_range) :: (List.filter (fun (mr, _) -> mr <> merged_reg) !groups)
         | None ->
-            (* No suitable group found; create a new merged register *)
+            (* We didn't find a suitable group, create a new merged register *)
             let new_merged_reg = reg in
             Hashtbl.replace reg_mapping reg new_merged_reg;
             groups := (new_merged_reg, live_range) :: !groups
       end
-    ) ranges;
+    ) live_ranges;
     reg_mapping
 
   (* Optimize the CFG by merging registers *)
@@ -104,7 +100,7 @@ module Optimizer = struct
       Printf.printf "\n"
     ) live_ranges;
     
-    (* Compute the register merging reg_mapping *)
+    (* Compute the register merging mapping *)
     let reg_map = merge_registers live_ranges in
 
     (* Print register merging mapping for debuging *)
@@ -113,8 +109,9 @@ module Optimizer = struct
       Printf.printf "Register %d -> %d\n" r1 r2
     ) reg_map;
 
-    (* Function to update a register according to the reg_mapping *)
+    (* Function to update a register according to the mapping *)
     let update_reg r =
+      (* If the register is not in the mapping, keep it as is, otherwise, get the new merged reg *)
       Hashtbl.find_opt reg_map r |> Option.value ~default:r
     in
 
