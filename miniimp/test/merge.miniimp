@@ -1,12 +1,16 @@
 def main with input in output out as
-  x := in + 2;
-  y := x + in;
-  j := x + in;
-  l := x + 1;
-  (while y < 10 do (
-    y := y + 2;
-    z := y + 2;
-    x := l + 2
-  ));
+  x := in;
+  y := x + 2;
+  a := y + 3;
+  b := x + 4;
+  (if x < 10 then (
+    c := 3;
+    (if c < 0 then (
+        d := 4
+    ) else (
+        e := 0
+    ))
+  ) else
+    f := 0);
   u := y + 3;
-  out := j
+  out := u
