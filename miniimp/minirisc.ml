@@ -92,4 +92,8 @@ module MiniRISC = struct
     let blocks_str = String.concat "\n\n" (List.map string_of_block blocks) in
     let edges_str = String.concat "\n" (List.map (fun (l1, l2) -> Printf.sprintf "%s -> %s" l1 l2) edges) in
     Printf.sprintf "Entry: %s\nExit: %s\n\nBlocks:\n%s\n\nEdges:\n%s" entry exit blocks_str edges_str
+
+  let string_of_program_no_edges blocks =
+    let blocks_str = String.concat "\n\n" (List.map string_of_block blocks) in
+    Printf.sprintf "%s" blocks_str
 end

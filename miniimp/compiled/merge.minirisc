@@ -1,0 +1,76 @@
+L0:
+copy r0 => r2
+addi r2 2 => r102
+loadI 8001 => r101
+store r102 => r101
+loadI 8001 => r102
+load r102 => r102
+addi r102 3 => r102
+loadI 8009 => r101
+store r102 => r101
+addi r2 4 => r102
+loadI 8008 => r101
+store r102 => r101
+jump L7
+
+L7:
+loadI 10 => r102
+loadI 8002 => r101
+store r102 => r101
+loadI 8002 => r102
+load r102 => r102
+less r2 r102 => r102
+loadI 8005 => r101
+store r102 => r101
+cjump r101 L1 L6
+
+L1:
+loadI 3 => r2
+jump L4
+
+L4:
+loadI 0 => r102
+loadI 8004 => r101
+store r102 => r101
+loadI 8004 => r102
+load r102 => r102
+less r2 r102 => r102
+loadI 8011 => r101
+store r102 => r101
+cjump r101 L2 L3
+
+L2:
+loadI 4 => r102
+loadI 8010 => r101
+store r102 => r101
+jump L5
+
+L3:
+loadI 0 => r102
+loadI 8007 => r101
+store r102 => r101
+jump L5
+
+L5:
+noop
+jump L8
+
+L6:
+loadI 0 => r102
+loadI 8006 => r101
+store r102 => r101
+jump L8
+
+L8:
+noop
+jump L9
+
+L9:
+loadI 8001 => r102
+load r102 => r102
+addi r102 3 => r102
+loadI 8003 => r101
+store r102 => r101
+loadI 8003 => r102
+load r102 => r102
+copy r102 => r1
