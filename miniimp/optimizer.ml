@@ -11,36 +11,38 @@ module Optimizer = struct
   (* A mapping from an original register (int) to a new merged register (int) *)
   type reg_mapping = (int, int) Hashtbl.t
 
+
+
   (* Compute the live ranges for each register *)
   let compute_live_ranges (cfg : program) (liveness_state : (string, Liveness.analysis_state) Hashtbl.t) : (int, StringSet.t) Hashtbl.t =
     (* Create a hashtable to store live ranges for each register *)
-  let ranges = Hashtbl.create 10 in
-  (* Iterate over each edge in the CFG *)
-  List.iter (fun (l_from, l_to) ->
-    (* For the edge from l_from to l_to, registers that are live on this edge are exactly
-       those in the in_set of the successor block (l_to) *)
-    let state = Hashtbl.find liveness_state l_to in
-    (* For each register in the live_in set of block l_to, add this edge to its live range *)
-    RegisterSet.iter (fun r ->
-      let current_range = Hashtbl.find_opt ranges r |> Option.value ~default:StringSet.empty in
-      (* Represent the edge as "l_from->l_to" *)
-      Hashtbl.replace ranges r (StringSet.add (l_from ^ "->" ^ l_to) current_range)
-    ) state.in_set
-  ) cfg.edges;
-
-  (* add the remaining registers from all blocks' instructions that were not already added to the ranges list and give them empty range *)
-  List.iter (fun block ->
-    List.iter (fun instr ->
-      let used_regs = invloved_registers instr in
+    let ranges = Hashtbl.create 10 in
+    (* Iterate over each edge in the CFG *)
+    List.iter (fun (l_from, l_to) ->
+      (* For the edge from l_from to l_to, registers that are live on this edge are exactly
+        those in the in_set of the successor block (l_to) *)
+      let state = Hashtbl.find liveness_state l_to in
+      (* For each register in the live_in set of block l_to, add this edge to its live range *)
       RegisterSet.iter (fun r ->
-        if not (Hashtbl.mem ranges r) then
-          Hashtbl.add ranges r StringSet.empty
-      ) used_regs
-    ) block.coms
-  ) cfg.blocks;
+        let current_range = Hashtbl.find_opt ranges r |> Option.value ~default:StringSet.empty in
+        (* Represent the edge as "l_from->l_to" *)
+        Hashtbl.replace ranges r (StringSet.add (l_from ^ "->" ^ l_to) current_range)
+      ) state.in_set
+    ) cfg.edges;
 
-  (* Return the computed live ranges *)
-  ranges
+    (* add the remaining registers from all blocks' instructions that were not already added to the ranges list and give them empty range *)
+    List.iter (fun block ->
+      List.iter (fun instr ->
+        let used_regs = invloved_registers instr in
+        RegisterSet.iter (fun r ->
+          if not (Hashtbl.mem ranges r) then
+            Hashtbl.add ranges r StringSet.empty
+        ) used_regs
+      ) block.coms
+    ) cfg.blocks;
+
+    (* Return the computed live ranges *)
+    ranges
 
   (* Check if two registers can be merged (their live ranges do not overlap) *)
   let can_merge (live_ranges : (int, StringSet.t) Hashtbl.t) (r1 : int) (r2 : int) : bool =
