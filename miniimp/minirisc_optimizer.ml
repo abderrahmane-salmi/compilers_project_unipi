@@ -3,7 +3,7 @@ open Liveness
 open Minirisc
 open MiniRISC
 
-module Optimizer = struct
+module MiniriscOptimizer = struct
 
   module RegisterSet = Set.Make(Int)
   module StringSet = Set.Make(String)

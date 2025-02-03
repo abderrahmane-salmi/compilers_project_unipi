@@ -4,7 +4,7 @@ open Minirisc
 open Defined_variables
 open Liveness
 open Minirisc_allocator
-open Optimizer
+open Minirisc_optimizer
 
 (* Main function to read program, generate CFG, and evaluate it *)
 let () =
@@ -64,7 +64,7 @@ let () =
   Liveness.print_liveness_state liveness_state;
 
   (* Optimize the CFG by merging registers *)
-  let optimized_cfg = Optimizer.optimize_registers minirisc_cfg liveness_state in
+  let optimized_cfg = MiniriscOptimizer.optimize_registers minirisc_cfg liveness_state in
   let optimized_cfg_str = MiniRISC.string_of_program optimized_cfg in
   Printf.printf "\nOptimized MiniRISC CFG after Register Merging:\n%s\n" optimized_cfg_str;
 
