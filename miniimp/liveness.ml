@@ -44,6 +44,12 @@ module Liveness = struct
     (* Other instructions do not define a register *)
     | _ -> RegisterSet.empty
 
+  (* helper fun that returns all involved (used or defined) regs in an instruction *)
+  let invloved_registers (instr : scomm) : RegisterSet.t =
+    let used = used_registers instr in
+    let defined = defined_registers instr in
+    RegisterSet.union used defined
+
 
 
   (* ************************* INITIALIZATION ************************* *)

@@ -27,6 +27,19 @@ module Optimizer = struct
       Hashtbl.replace ranges r (StringSet.add (l_from ^ "->" ^ l_to) current_range)
     ) state.in_set
   ) cfg.edges;
+
+  (* add the remaining registers from all blocks' instructions that were not already added to the ranges list and give them empty range *)
+  List.iter (fun block ->
+    List.iter (fun instr ->
+      let used_regs = invloved_registers instr in
+      RegisterSet.iter (fun r ->
+        if not (Hashtbl.mem ranges r) then
+          Hashtbl.add ranges r StringSet.empty
+      ) used_regs
+    ) block.coms
+  ) cfg.blocks;
+
+  (* Return the computed live ranges *)
   ranges
 
   (* Check if two registers can be merged (their live ranges do not overlap) *)

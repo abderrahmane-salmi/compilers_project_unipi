@@ -35,10 +35,8 @@ module MiniriscAllocator = struct
     List.iter (fun block ->
       (* Iterate over all instructions in the block *)
       List.iter (fun instr ->
-        (* get all the used registers, which is the union of defined and used registers in the instruction *)
-        let used = used_registers instr in
-        let defined = defined_registers instr in
-        let used_regs = RegisterSet.union used defined in
+        (* get all the used registers in the instruction *)
+        let used_regs = invloved_registers instr in
         
         (* Update frequency table for each register *)
         RegisterSet.iter update_freq used_regs
