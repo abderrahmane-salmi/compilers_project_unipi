@@ -92,7 +92,7 @@ module Optimizer = struct
     { cfg with blocks = updated_blocks }
 
   (* Optimize the CFG by merging registers *)
-  let optimize_cfg (cfg : program) (liveness_state: (string, analysis_state) Hashtbl.t) : program =
+  let optimize_registers (cfg : program) (liveness_state: (string, analysis_state) Hashtbl.t) : program =
     (* Compute live ranges for each register *)
     let live_ranges = compute_live_ranges cfg liveness_state in
 
