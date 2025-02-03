@@ -1,0 +1,6 @@
+def main with input in output out as
+  if true and in < 10 then (
+    out := 1
+  )
+  else
+    out := 0
