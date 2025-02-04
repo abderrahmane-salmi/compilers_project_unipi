@@ -5,7 +5,7 @@
 (* Tokens *)
 %token <int> INT
 %token <bool> BOOL
-%token <string> ID
+%token <string> IDENT
 %token LET LETFUN IN IF THEN ELSE FUN
 %token PLUS MINUS TIMES LESS NOT AND
 %token EQUAL ARROW LPAREN RPAREN
@@ -31,21 +31,28 @@ program:
   | e = expr; EOF { e }
 
 expr:
-  | i = INT { IntLit(i) }
-  | b = BOOL { BoolLit(b) }
-  | x = ID { Var(x) }
-  | FUN; x = ID; ARROW; t = expr { Fun(x, t) }
-  | LET; x = ID; EQUAL; t1 = expr; IN; t2 = expr { Let(x, t1, t2) }
-  | LETFUN; f = ID; x = ID; EQUAL; t1 = expr; IN; t2 = expr { Letfun(f, x, t1, t2) }
+  | a = aexp { a }
+  | b = bexp { b }
+  | FUN; x = IDENT; ARROW; t = expr { Fun(x, t) }
+  | LET; x = IDENT; EQUAL; t1 = expr; IN; t2 = expr { Let(x, t1, t2) }
+  | LETFUN; f = IDENT; x = IDENT; EQUAL; t1 = expr; IN; t2 = expr { Letfun(f, x, t1, t2) }
   | IF; t1 = expr; THEN; t2 = expr; ELSE; t3 = expr { If(t1, t2, t3) }
-  | t1 = expr; op = binop; t2 = expr { Op(t1, op, t2) }
-  | NOT; t = expr { Op(t, Not, t) }
   | t1 = expr; t2 = expr { App(t1, t2) }
   | LPAREN; t = expr; RPAREN { t }
 
-binop:
+bexp:
+  | b = BOOL { BoolLit(b) }
+  | NOT b = bexp { Op(b, Not, b) }
+  | t1 = bexp AND t2 = bexp { Op(t1, And, t2) }
+  | t1 = aexp LESS t2 = aexp { Op(t1, Less, t2) }
+
+aexp:
+  | x = IDENT { Var(x) }
+  | i = INT { IntLit(i) }
+  | t1 = aexp; op = aop; t2 = aexp { Op(t1, op, t2) }
+  | LPAREN a = aexp RPAREN { a }
+
+aop:
   | PLUS { Add }
   | MINUS { Sub }
   | TIMES { Mul }
-  | LESS { Less }
-  | AND { And }

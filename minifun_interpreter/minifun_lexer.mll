@@ -27,7 +27,7 @@ rule read = parse
   | "=>" { ARROW }
   | '(' { LPAREN }
   | ')' { RPAREN }
-  | ident as id { ID(id) }
+  | ident as id { IDENT(id) }
   | digit+ as num { INT(int_of_string num) }
   | eof { EOF }
   | _ { failwith ("Unexpected character: " ^ Lexing.lexeme lexbuf) }
