@@ -34,7 +34,7 @@ expr:
   | fun_expr { $1 }
   | let_expr { $1 }
   | if_expr { $1 }
-  | binop_expr { $1 }
+  | op_expr { $1 }
   | app_expr { $1 }
 
 fun_expr:
@@ -47,8 +47,8 @@ let_expr:
 if_expr:
   | IF e1 = expr THEN e2 = expr ELSE e3 = expr { If(e1, e2, e3) }
 
-binop_expr:
-  | e1 = expr op = binop e2 = expr { Op(e1, op, e2) }
+op_expr:
+  | e1 = expr op = opr e2 = expr { Op(e1, op, e2) }
 
 app_expr:
   | app_expr atomic_expr { App($1, $2) }
@@ -58,10 +58,10 @@ atomic_expr:
   | i = INT { IntLit(i) }
   | b = BOOL { BoolLit(b) }
   | x = IDENT { Var(x) }
-  | NOT e = atomic_expr { Op(e, Not, e) } (* Fix NOT ambiguity *)
+  | NOT e = atomic_expr { Op(e, Not, e) }
   | LPAREN e = expr RPAREN { e }
 
-binop:
+opr:
   | PLUS { Add }
   | MINUS { Sub }
   | TIMES { Mul }
