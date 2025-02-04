@@ -36,7 +36,7 @@ expr:
   | FUN; x = IDENT; ARROW; t = expr { Fun(x, t) }
   | LET; x = IDENT; EQUAL; t1 = expr; IN; t2 = expr { Let(x, t1, t2) }
   | LETFUN; f = IDENT; x = IDENT; EQUAL; t1 = expr; IN; t2 = expr { Letfun(f, x, t1, t2) }
-  | IF; t1 = expr; THEN; t2 = expr; ELSE; t3 = expr { If(t1, t2, t3) }
+  | IF; t1 = bexp; THEN; t2 = expr; ELSE; t3 = expr { If(t1, t2, t3) }
   | t1 = expr; t2 = expr { App(t1, t2) }
   | LPAREN; t = expr; RPAREN { t }
 
