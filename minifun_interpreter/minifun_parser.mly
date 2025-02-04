@@ -19,8 +19,6 @@
 %left TIMES
 %left LESS
 %left AND
-%right NOT
-%left APP (* Function application should bind tightest *)
 
 (* Start symbol *)
 %start <expr> program
