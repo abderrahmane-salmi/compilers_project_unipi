@@ -14,6 +14,7 @@
 (* Precedence and associativity *)
 %nonassoc IN
 %nonassoc ELSE
+%right ARROW
 %left PLUS MINUS
 %left TIMES
 %left LESS
