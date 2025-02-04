@@ -1,0 +1,3 @@
+letfun double x = x * 2 in
+letfun square x = x * x in
+double (square 4)

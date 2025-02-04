@@ -1,0 +1,4 @@
+letfun sum x = 
+  if x < 1 then 0
+  else x + sum (x - 1)
+in sum 3 + 2 * 4
