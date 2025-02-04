@@ -1,6 +1,1 @@
-letfun fact x =
-  if x < 2 then
-    1
-  else
-    x * fact (x-1)
-in fact 5
+let x = 10 in x + 5 - 2
