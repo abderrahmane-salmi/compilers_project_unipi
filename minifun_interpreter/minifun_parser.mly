@@ -39,7 +39,7 @@ expr:
   | LETFUN; f = ID; x = ID; EQUAL; t1 = expr; IN; t2 = expr { Letfun(f, x, t1, t2) }
   | IF; t1 = expr; THEN; t2 = expr; ELSE; t3 = expr { If(t1, t2, t3) }
   | t1 = expr; op = binop; t2 = expr { Op(t1, op, t2) }
-  | NOT; t = expr { Op(BoolLit(true), Not, t) } (* Unary NOT *)
+  | NOT; t = expr { Op(t, Not, t) }
   | t1 = expr; t2 = expr { App(t1, t2) }
   | LPAREN; t = expr; RPAREN { t }
 
